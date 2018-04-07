@@ -104,22 +104,20 @@ type CentralService struct {
 				Eec  int    `json:"eec"`
 				Puc  []struct {
 					Ces []struct {
-						Eid int    `json:"eid"`
-						Gt  string `json:"gt"`
-						Tid string `json:"tid"`
-						Ior bool   `json:"ior"`
-						Ht  string `json:"ht"`
-						At  string `json:"at"`
-						Est string `json:"est"`
-						Hs  struct {
-						} `json:"hs"`
-						As struct {
-						} `json:"as"`
-						Il   bool `json:"il"`
-						Mts  int  `json:"mts"`
-						Isbg bool `json:"isbg"`
-						Pt   int  `json:"pt"`
-						Isb  bool `json:"isb"`
+						Eid  int      `json:"eid"`
+						Gt   string   `json:"gt"`
+						Tid  string   `json:"tid"`
+						Ior  bool     `json:"ior"`
+						Ht   string   `json:"ht"`
+						At   string   `json:"at"`
+						Est  string   `json:"est"`
+						Hs   struct{} `json:"hs"`
+						As   struct{} `json:"as"`
+						Il   bool     `json:"il"`
+						Mts  int      `json:"mts"`
+						Isbg bool     `json:"isbg"`
+						Pt   int      `json:"pt"`
+						Isb  bool     `json:"isb"`
 					} `json:"ces"`
 					Cid int    `json:"cid"`
 					Cn  string `json:"cn"`
@@ -145,24 +143,22 @@ type CentralService struct {
 				Eec  int    `json:"eec"`
 				Puc  []struct {
 					Ces []struct {
-						Eid int    `json:"eid"`
-						En  string `json:"en"`
-						Gt  string `json:"gt"`
-						Tid string `json:"tid"`
-						Ior bool   `json:"ior"`
-						Ht  string `json:"ht"`
-						At  string `json:"at"`
-						Esd string `json:"esd"`
-						Est string `json:"est"`
-						Hs  struct {
-						} `json:"hs"`
-						As struct {
-						} `json:"as"`
-						Il   bool `json:"il"`
-						Mts  int  `json:"mts"`
-						Isbg bool `json:"isbg"`
-						Pt   int  `json:"pt"`
-						Isb  bool `json:"isb"`
+						Eid  int      `json:"eid"`
+						En   string   `json:"en"`
+						Gt   string   `json:"gt"`
+						Tid  string   `json:"tid"`
+						Ior  bool     `json:"ior"`
+						Ht   string   `json:"ht"`
+						At   string   `json:"at"`
+						Esd  string   `json:"esd"`
+						Est  string   `json:"est"`
+						Hs   struct{} `json:"hs"`
+						As   struct{} `json:"as"`
+						Il   bool     `json:"il"`
+						Mts  int      `json:"mts"`
+						Isbg bool     `json:"isbg"`
+						Pt   int      `json:"pt"`
+						Isb  bool     `json:"isb"`
 					} `json:"ces"`
 					Cid int    `json:"cid"`
 					Cn  string `json:"cn"`
