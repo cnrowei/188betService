@@ -1,75 +1,107 @@
 package main
 
 import (
+	"188betService/query"
 	"fmt"
-	"io/ioutil"
-	"net/url"
-	//"fmt"
-	//"encoding/json"
-	//"io/ioutil"
-	//"os"
-	//"fmt"
-	//"github.com/gin-gonic/gin"
-	//"github.com/gin-gonic/gin/binding"
-	"net/http"
-	//"188bet/models"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	centraServicePost()
+	//query.GetCQCP()
+	query.Get_Chongqing()
+	//query.Get_Xinjiang()
+	//query.NewlottoXinjiang()
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.Default()
+
+	Heyispig()
+
+	startTimer(func() {
+		query.NewlottoChongqing()
+		fmt.Println("计算下一个零点.自动添加第二天赛事", time.Now())
+	})
+
+	router.Run(":8886")
 }
 
-// func main(){
-// 	/
-// 	router := gin.Default()
-//     router.POST("/form_post", func(c *gin.Context) {
-//         message := c.PostForm("message")
-//         nick := c.DefaultPostForm("nick", "anonymous")
+func startTimer1(f func()) {
+	go func() {
+		for {
+			f()
+			now := time.Now()
+			// 计算下一个零点
+			next := now.Add(time.Hour * 24)
+			next = time.Date(next.Year(), next.Month(), next.Day(), 0, 0, 0, 0, next.Location())
+			t := time.NewTimer(next.Sub(now))
+			<-t.C
+		}
+	}()
+}
 
-//         c.JSON(http.StatusOK, gin.H{
-//             "status":  gin.H{
-//                 "status_code": http.StatusOK,
-//                 "status":      "ok",
-//             },
-//             "message": message,
-//             "nick":    nick,
-//         })
-//     })
-// }
+//启动的时候执行一次，以后每天晚上12点执行，怎么实现
+func startTimer(f func()) {
+	go func() {
+		for {
+			f()
+			now := time.Now()
+			// 计算下一个零点
+			next := now.Add(time.Minute * 24)
+			//beego.Error("next11", next)
+			next = time.Date(next.Year(), next.Month(), next.Day(), 0, 0, 0, 0, next.Location())
+			next = next.AddDate(0, 0, 1)
+			durmi, _ := time.ParseDuration("2m")
+			next = next.Add(durmi)
 
-func centraServicePost() {
+			//beego.Error("next22", next.Sub(now))
+			t := time.NewTimer(next.Sub(now))
+			<-t.C
+		}
+	}()
+}
 
-	c := &http.Client{}
-	//req, _ := http.NewRequest("GET", login_url, nil)
-	//res, _ := c.Do(req)
-	//post数据
-	postValues := url.Values{}
-	postValues.Add("IsFirstLoad", "true")
-	postValues.Add("VersionL", "-1")
-	postValues.Add("VersionU", "0")
-	postValues.Add("VersionS", "-1")
-	postValues.Add("VersionF", "-1")
-	postValues.Add("VersionH", "1:0,2:0,3:0,9:0,13:0,18:0,21:0,23:0")
-	postValues.Add("VersionT", "-1")
+//检测系统时间，判断时间差
+func Heyispig() {
+	ticker := time.NewTicker(time.Millisecond * 1000)
+	fmt.Println("--------", time.Millisecond*1000)
+	go func() {
+		for _ = range ticker.C {
 
-	postValues.Add("IsEventMenu", "false")
-	postValues.Add("SportID", "1")
-	postValues.Add("CompetitionID", "-1")
-	postValues.Add("reqUrl", "/zh-cn/sports/")
-	postValues.Add("oIsInplayAll", "false")
-	postValues.Add("oVersion", "3,181066|10,623")
-	postValues.Add("oIsFirstLoad", "false")
-	postValues.Add("oSortBy", "1")
-	postValues.Add("oOddsType", "0")
-	postValues.Add("oPageNo", "0")
-	postValues.Add("LiveCenterEventId", "0")
-	postValues.Add("LiveCenterSportId", "0")
+			fmt.Println("系统整在检测时间,每10分钟执行一次....", time.Now())
 
-	postURL := "https://sb.oneeightyeightbet.com/zh-cn/Service/CentralService?GetData&ts=1521010315794"
+			now := time.Now()
+			s := now.Minute()
+			ss := now.Second()
 
-	res, _ := c.PostForm(postURL, postValues)
-	data, _ := ioutil.ReadAll(res.Body)
-	res.Body.Close()
+			str := strconv.Itoa(s)
 
-	fmt.Println(string(data))
+			if strings.Contains(str, "0") || strings.Contains(str, "5") && ss == 00 {
+				ticker.Stop()
+				Ok10timer()
+				fmt.Println("执行。。。", time.Now())
+			}
+
+			// if s == 00 || s == 10 || s == 20 || s == 30 || s == 40 || s == 50 && ss == 33 {
+			// 	ticker.Stop()
+			// 	Ok10timer()
+			// 	fmt.Println("执行。。。", time.Now())
+			// 	//ticker = time.NewTicker(time.Minute * 1)
+			// }
+
+		}
+	}()
+}
+
+//重庆时时彩 程序对整时间后，每10分钟读取一次数据
+func Ok10timer() {
+	ticker := time.NewTicker(time.Minute * 1)
+	go func() {
+		for _ = range ticker.C {
+
+			query.Get_Chongqing()
+		}
+	}()
 }

@@ -1,0 +1,398 @@
+{
+    "isSuccess": true,
+    "data": {
+        "announcements": [],
+        "openBets": {
+            "totalCount": 0,
+            "totalStake": 0.0,
+            "totalReturnAmount": 0.0,
+            "wagers": []
+        },
+        "counters": [{
+            "id": 360,
+            "name": "XinJiang",
+            "official": "http://www.xjflcp.com/game/sscIndex",
+            "status": 2,
+            "draw": {
+                "drawNo": 2018040713,
+                "drawStatus": 4,
+                "startTime": "2018-04-07T15:59:30+08:00",
+                "endTime": "2018-04-07T16:29:30+08:00",
+                "betClosedMMSS": "00:00",
+                "isCloseManually": false
+            },
+            "selections": {},
+            "gameResult": {},
+            "seq": 5,
+            "ballCount": 5,
+            "resultOpenIntervalSecond": 0,
+            "resultWaitingIntervalSecond": 0
+        }, {
+            "id": 350,
+            "name": "ChinaSwl3D",
+            "official": "http://www.zhcw.com/3d/kaijiangshuju/index.shtml?type=0",
+            "status": 4,
+            "draw": {
+                "drawNo": 2018040713,
+                "drawStatus": 4,
+                "startTime": "2018-04-07T15:59:30+08:00",
+                "endTime": "2018-04-07T16:29:30+08:00",
+                "betClosedMMSS": "00:00",
+                "isCloseManually": false
+            },
+            "selections": {},
+            "gameResult": {},
+            "seq": 1,
+            "ballCount": 3,
+            "resultOpenIntervalSecond": 0,
+            "resultWaitingIntervalSecond": 0
+        }, {
+            "id": 340,
+            "name": "TianJing",
+            "official": "http://www.tjflcpw.com/report/SSC_WinMessage.aspx",
+            "status": 4,
+            "draw": {
+                "drawNo": 2018040713,
+                "drawStatus": 4,
+                "startTime": "2018-04-07T15:59:30+08:00",
+                "endTime": "2018-04-07T16:29:30+08:00",
+                "betClosedMMSS": "00:00",
+                "isCloseManually": false
+            },
+            "selections": {},
+            "gameResult": {},
+            "seq": 4,
+            "ballCount": 5,
+            "resultOpenIntervalSecond": 0,
+            "resultWaitingIntervalSecond": 0
+        }, {
+            "id": 330,
+            "name": "JiangXi",
+            "official": "http://data.shishicai.cn/jxssc/haoma/",
+            "status": 4,
+            "draw": {
+                "drawNo": 2018040713,
+                "drawStatus": 4,
+                "startTime": "2018-04-07T15:59:30+08:00",
+                "endTime": "2018-04-07T16:29:30+08:00",
+                "betClosedMMSS": "00:00",
+                "isCloseManually": false
+            },
+            "selections": {},
+            "gameResult": {},
+            "seq": 3,
+            "ballCount": 5,
+            "resultOpenIntervalSecond": 0,
+            "resultWaitingIntervalSecond": 0
+        }, {
+            "id": 320,
+            "name": "Chongqing",
+            "official": "http://www.cqcp.net/game/ssc/",
+            "status": 4,
+            "draw": {
+                "drawNo": 2018040713,
+                "drawStatus": 4,
+                "startTime": "2018-04-07T15:59:30+08:00",
+                "endTime": "2018-04-07T16:29:30+08:00",
+                "betClosedMMSS": "00:00",
+                "isCloseManually": false
+            },
+            "selections": {
+                "OneDigit": {
+                    "id": 1,
+                    "odds": 3E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 1.5E+04
+                },
+                "TwoDigits": {
+                    "id": 2,
+                    "odds": 1.4E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+03
+                },
+                "TwoDigits_Double": {
+                    "id": 3,
+                    "odds": 2.8E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 1.5E+03
+                },
+                "ThreeDigits": {
+                    "id": 4,
+                    "odds": 1.4E+02,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+02
+                },
+                "ThreeDigits_Double": {
+                    "id": 5,
+                    "odds": 2.8E+02,
+                    "minBet": 2E+00,
+                    "maxBet": 1.5E+02
+                },
+                "ThreeDigits_Triple": {
+                    "id": 6,
+                    "odds": 7.5E+02,
+                    "minBet": 2E+00,
+                    "maxBet": 5E+01
+                },
+                "Sum_0": {
+                    "id": 7,
+                    "odds": 9E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 4.75E+03
+                },
+                "Span_0": {
+                    "id": 8,
+                    "odds": 7.1E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 5E+02
+                },
+                "Sum_1": {
+                    "id": 9,
+                    "odds": 2E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 2E+03
+                },
+                "Span_1": {
+                    "id": 10,
+                    "odds": 1.4E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+03
+                },
+                "Sum_2": {
+                    "id": 11,
+                    "odds": 1.6E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 2.75E+03
+                },
+                "Span_2": {
+                    "id": 12,
+                    "odds": 8E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 4E+03
+                },
+                "Sum_3": {
+                    "id": 13,
+                    "odds": 1.4E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+03
+                },
+                "Span_3": {
+                    "id": 14,
+                    "odds": 6E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 5E+03
+                },
+                "Sum_4": {
+                    "id": 15,
+                    "odds": 1.2E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 3.5E+03
+                },
+                "Span_4": {
+                    "id": 16,
+                    "odds": 5.5E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 5.5E+03
+                },
+                "Sum_5": {
+                    "id": 17,
+                    "odds": 1.1E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 4E+03
+                },
+                "Span_5": {
+                    "id": 18,
+                    "odds": 5E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 5.5E+03
+                },
+                "Sum_6": {
+                    "id": 19,
+                    "odds": 1E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 4.5E+03
+                },
+                "Span_6": {
+                    "id": 20,
+                    "odds": 5.5E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 5.5E+03
+                },
+                "Sum_7": {
+                    "id": 21,
+                    "odds": 1E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 4.5E+03
+                },
+                "Span_7": {
+                    "id": 22,
+                    "odds": 6E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 5E+03
+                },
+                "Sum_8": {
+                    "id": 23,
+                    "odds": 1E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 4.5E+03
+                },
+                "Span_8": {
+                    "id": 24,
+                    "odds": 8E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 4E+03
+                },
+                "Sum_9": {
+                    "id": 25,
+                    "odds": 1E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 4.5E+03
+                },
+                "Span_9": {
+                    "id": 26,
+                    "odds": 1.4E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+03
+                },
+                "Sum_10": {
+                    "id": 27,
+                    "odds": 1.1E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 4E+03
+                },
+                "Sum_11": {
+                    "id": 28,
+                    "odds": 1.2E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 3.5E+03
+                },
+                "Sum_12": {
+                    "id": 29,
+                    "odds": 1.4E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+03
+                },
+                "Sum_13": {
+                    "id": 30,
+                    "odds": 1.6E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 2.75E+03
+                },
+                "Sum_14": {
+                    "id": 31,
+                    "odds": 2E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 2E+03
+                },
+                "Sum_15": {
+                    "id": 32,
+                    "odds": 9E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 4.75E+03
+                },
+                "OneFixedDigit": {
+                    "id": 33,
+                    "odds": 9.5E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 5E+03
+                },
+                "TwoFixedDigits": {
+                    "id": 34,
+                    "odds": 9.5E+01,
+                    "minBet": 2E+00,
+                    "maxBet": 5E+02
+                },
+                "ThreeFixedDigits": {
+                    "id": 35,
+                    "odds": 9.2E+02,
+                    "minBet": 2E+00,
+                    "maxBet": 5E+01
+                },
+                "Big": {
+                    "id": 36,
+                    "odds": 1.95E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+04
+                },
+                "Small": {
+                    "id": 37,
+                    "odds": 1.95E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+04
+                },
+                "Odd": {
+                    "id": 38,
+                    "odds": 1.95E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+04
+                },
+                "Even": {
+                    "id": 39,
+                    "odds": 1.95E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+04
+                },
+                "Dragon": {
+                    "id": 40,
+                    "odds": 1.95E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+04
+                },
+                "Tiger": {
+                    "id": 41,
+                    "odds": 1.95E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+04
+                },
+                "Equally": {
+                    "id": 42,
+                    "odds": 1.95E+00,
+                    "minBet": 2E+00,
+                    "maxBet": 3E+04
+                }
+            },
+            "gameResult": {},
+            "seq": 2,
+            "ballCount": 5,
+            "resultOpenIntervalSecond": 0,
+            "resultWaitingIntervalSecond": 0
+        }, {
+            "id": 310,
+            "name": "ShangHai",
+            "official": "http://fucai.eastday.com/LotteryNew/app_SSSL.aspx",
+            "status": 4,
+            "draw": {
+                "drawNo": 2018040713,
+                "drawStatus": 4,
+                "startTime": "2018-04-07T15:59:30+08:00",
+                "endTime": "2018-04-07T16:29:30+08:00",
+                "betClosedMMSS": "00:00",
+                "isCloseManually": false
+            },
+            "selections": {},
+            "gameResult": {},
+            "seq": 0,
+            "ballCount": 3,
+            "resultOpenIntervalSecond": 0,
+            "resultWaitingIntervalSecond": 0
+        }],
+        "trendsList": [{
+            "counterId": 310,
+            "trends": [{
+                "counterId": 0,
+                "drawNo": 2018040702,
+                "drawTime": "0001-01-01T00:00:00+08:00",
+                "drawStatus": 0,
+                "voidReason": 0,
+                "resultBalls": [6, 2, 2]
+            }]
+        }],
+        "betSlip": "[{\"counterId\":320,\"drawNo\":61,\"bet\":{\"betType\":\"num\",\"selection\":\"66\"},\"ballNum\":\"53\"}]",
+        "member": {
+            "MemberId": 268042,
+            "MemberName": "conku188",
+            "CurrencyCode": "RMB",
+            "Balance": "1341.2319"
+        }
+    }
+}
