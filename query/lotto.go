@@ -1,10 +1,10 @@
 package query
 
 import (
-	"188betService/models"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"code.google.com/p/mahonia"
+	"../models"
 )
 
 func Readfile(path string) string {
@@ -135,7 +135,8 @@ func NewlottoXinjiang() {
 
 //抓取数据 Chongqingwww.cqcp.net
 func Get_Chongqing() {
-
+LABEL1:
+	x := 1
 	strUrl := "http://www.cqcp.net/game/ssc/"
 
 	post_data := `ScriptManager1=UpdatePanel1%7ClnkBtnFirst&__EVENTTARGET=lnkBtnFirst&__EVENTARGUMENT=&__VIEWSTATE=yk2t2rtNVT3gJkFtFrZHlvffgels6hiqkfahIJnv4CszKxNAKr%2FYwvxdIwcr4%2BpXN5PD0wq68wfksaty4bInckf4zEb%2F%2FoRkTXTMmIdT8quEOK%2BPgIWRY94JBr4yXbLVc5iDtxXLY1evb11avNE7MOBv4VkmzpLWktqCYyjaBuwi%2BSJitrmHnNAK420yM3EbZgg3%2F%2Bl9qxoLGAefT58HQ72tj7uSwQsvQ2uvASQKMpmpFuUfY6YEve1xtq32cX7zQllvdq2fw4WIB5JCnYb9QJFEITL60Dd3kXX4uR2Q9ekGoJ3wuKV5hmOShpvS1cGNg1ckYDz2mQvyBHt6PtW%2B4DlxRk0FGrIiEP8peke6im5V%2BFdgqrZFyFuilW2QGttXuYF0IiKpP8lQl%2BRnP819qH0ZSNSksQun9zjGGA46HaSagtb2UO62sJ7RO%2BC7GPzD4fIPJqcwm2ttSOXHBCxzZDWdWLjeRyhPEyA4S2EuQ3I%2FTLbok9z02bH3gaarNdIezTT3yhOG5QyMEm6oUIUaSU9eiB%2FO%2BysggsK5yFE%2FNylEWyf4FVOXkORI2qmIyBVQTRJSXeMCvf3vB1W%2BIqr1m5DRU%2FNBRuQl1f19yaDF74eOgXPK5Nya4gbt0uAKZAaH974djXia0FcrMm98iKgGlE4xolySSxLpPzDxW1NEi99SMxC%2BpzuDZI02Rft0Y9dnFGvZ0yNbUoh%2FwYS93GNceapEF3Viv7DZiM5JgBGoDEoJGAfUnka8WZMcQDXN23y8Db3afez7UV4jbf5mHzd1ycg%2FSu7pwqOXWaF%2FPSpWpHt8tBpZocHa4QmHO0QCVVAs7YBJYv443o2op2l2vSl0S9%2Ft6zLsFJhhfkBhO0XciLxI7ymU6u0xpHYV3TafDVBwOi3Y9iSOqYzbh0WII7uFN1Uou4UEPzkgOXylRR8WgPExjMsYl9s3Rx0X2hlTsiBSBbYrJ8PXV9DghXHRnkRJfHW7dRG0%2BBJ5ymq2GAQXqlWibDw0vpUmbgD%2B5PiXQPhZmsQRtVzQEPIzTrwkruHFCvCqblJdoKPA4zP1jqt67eutoM4k6DQB7ducPIsfzoaVhI79EmEFmylKeHotO0Ocai5buHQtxfR35OzRQ1w5t%2BHBJjiAYQAn8WG3sB4BpY5LwbOpk8JBm9LqXTeVKABROCkg%2B6ifvfxU6QuyPk4T3cuaJOPyUk36jwmLqyTYgY0ksW2I6IhElHmaUFL8lp7EXtiOMSuGRv2pdEUxPCvrxii25TWIp%2F0MiKPvwT5d78chB%2BrF%2BMQe11Sbpe1MDEt5VH3RrgraAfnsqU92lZOny6Vp%2FRwdoiK8M4xgsFP8G4NV3b67eC%2FnOTjACCaBTAIg8zdp%2B5hCNhdxtqdAJkkrhaNKpZPhYEZL5vADtVoCIARx0g7yBYpQpZ%2B3c7dbF6OlmWrEFTHZHWLN85uc2vWUaMqIoF0KMaOEiYzOjfRoBG%2FeKMMuZG3gsxbBO490tsYTgxr%2FVK%2BqtDmwpm1nw8HfGqO0yxwiOoOAXOxe2hEMojEN0WoDsG7IVmSqo%2FbAR98ChueC7%2FJuQmz5ZNfop4pBLoD%2BG%2BkEcd2aRJ%2F8J0tMXA8iwHMnP84CJ6cNaUBZV3fQJoZLyp1TtClnoWdS0P0a2lsyD9ls5UaRBO%2BIvIi9IoCE%2Fq9lH4zwqGmdC8mJzqLzJZzEja9YE%2FDDUQev8SE6vzr1NUO6srb576aJ483SR3HTgY71hSEllR1hGjTSeJkY2NL%2By3HAHAdtJ7k7Jm%2FPGJg2Co3ve8FW2XdxhzPwEQE6piBsrFC5MnaSPqiENtqH7yBHmbvZ0vJGXq%2BD%2FfYZc7TjIoZexYkndv5lg%2BJ2I2gsM9NcXuVaKFhYpgait3qerLhUWTKSJPlVEnMK3kMA7IgxUNvvSTkGKLzjrlXGPl6VUdkdPbDHCq6B0AgpsHABv3T6t%2FPXrJXKi%2Bd%2BOv%2BSDq6CFMAzupRK7ggsMtGvyqwDqv4S7T47u7JCsLw7p067TpGSogcVO3iqjO8l9OkNuvB%2BapUdnTvl0aCMSwbrk9suaDkZvg0KJvVWOpHqXa3wiWa3h%2B0TWEg9sfNf9Yd%2B1ADEE1H6o87HtHIyGjBhyXqrkcp1W46TytAFoZQE9g6fdPitoS92JjJ1QHQEjmS6qaH%2FK4fqT9U9Q8roNFJJrJVCz9qglPaZzbYUo3Zvf%2FCIQTw%2BPW57LGj3hVr2f5r5BlCyVcQqlxHPxnmxEM%2BQom8lrq0%2F1Ezd9dONX4ylKVfhzQy8fCGdzLfxdZYQrKDHqzHLbrZuprO6BbXvof9zrXscMhgvfWouP3OrC%2FrbqO87h1FC1h0VpJYlWlqnMT2lOLTVvog6tPBnSWVKlw49ousomoCKgvVygAV1sK53FMJg2PmDhqCBiOfPALxCP4tmPIoSmAAA0akVJVk745GDaDVXqsH%2FW3SbefM%2FebXaf4pVRmSwWuXH4VmppHRFBZRa5eFAAulCWSgaZKD6aGnGyk7dLqCDqnqEO5NCsc87uocDPhVoqet6%2BY2XnW3EWei9rfK8y1RF283SQY6UWkwmua34Av0qBYwPyC2JeHdY6O9jSbCoMVQao%2Fa%2BiupBaA1WAAELq7qt4Y6PSem9EqrWR4zP8Q95U3DYdEqBP5evXi5d%2BneJoCcVw7Vwj%2FhVJjsPfSNTVsbpJCB210acr7bYmJaZT%2FslK5dHB2ZdDDEEw%2FKeJwl7X1xsMxW4%2BVRGe0mSSOdC%2FGRv%2FqZY5%2BcMvyaC9eDosJs93aRio%2F5c6EweJ4UemD7SJVoJ4RHX26ZdNs%2BnPUHn52%2FpKT53uRZJqazRLr77C6WHd%2FprMurEBfdgd6erDB97nGTmptrXxhu3gnnURAad9Bds5G57Cat8JenDzX5iEjPyLVqE%2BVi9512mAUJ9BSbvG4RorJiDQ361cPnw87NjC%2FxQHPD75S8Nxx%2BO2zU9MQGU39iWfNlvLdLASlG3zhxXHT%2Fk9voidDEt%2FDfglog5of6uzAV28H4vr%2F5WmRqgFf41qSlUN434%2FIF8dcSsTKe1gcUXub3Z3Vq0Q8Jjck39lD7fFd2dLzlDuGKHGzE8d%2FbtuAXnV5gCsnxortBY3jtAcVd3gT4huJ2%2BiXoMjkCKHn%2BuI7EA%2BPcgDkl9Jbvg8zdBiBm9VZM8yvCYU9Z%2B%2FpeYKr7Akf%2FGPHjIe8rONxrFPg2tMtE%2BsXPGkyCkToevll0mQVDzAnmbm30MYW6zM5%2FwWnxxcSyVzk%2F25XFVmHmNTaydTfjJ336p595vkK7%2F7HdOvTj9DHWH44rpa1lBOiFHjanxwBmDbYFbiD9wLhUVwJZL0ppwtFyNdpXD4Huo7yxBB5CMuGbD9gmX1TX4rHxYlGpNmn8yKjyuAeA7OBk4OU1pI7M%2F1Z5Lzz4F83VDb7MWbipfThFf0swPc95PjU8FvU0ou68KA4jCQoiAHEV2pMupLegpSXwP7WkZ7uTF6WN3aPSIV%2F4326E%2Fb8B%2FdjYI1q5uXKLkcOY5O4AYnltcDSsQhpKDvf2rr5nhIe1OkLCAqmkhYw0NpDbx7asilHFYap7GJkXNXBg5pXAjb4Zva7%2BhAP3hz88u02EXiO0nNrzqlFpFO%2FXg1pak%2BX2Ia3LSIpTENQnznOJ00oNbLXQ36eUkQhIv5BF%2FX3%2BbgQVepTOyjnAG6Ld3UN5ihJd%2FnQKEmHgcMBYgr35jVXijw%2Fhy9LO4azqUOCgPaY%2FEg93vwso0OcIfrwBeuM2YV90zgdctQpR5m%2FkpcDkZ1g8pX%2Bj22qrhiOdN67ZXqSOMdCDKE4qcm%2BPIrdhjsqSWDm1QygKd9ku8eKKBNHeapZty0o56lu03ZUVoh3M9TWtulD3kjqNokkS6yaTb9qWyr36zUp3Ix0i1wLqaqG1Yo97qAptkWCJjtc9YAD3ozN2772ubFzQ1zzx7MybwfdV%2Bg3XPlAkBiqJDprGNUx0wG5nR7HeOQHrDgpP4ErDexMct0QGL7m6w3lbKVHe3zt5zIqvYjLB3KZmrwJ3Ya5EaDb%2FXYOXHSLYo7srKQTIDGFrUU%2F388EXYWkSg8h0%2B0%2F0md6mscrXvDjz4NNNcbwKQ6PR7yT6%2BI62h%2B1otFYd9pdshmqOghOh4nPJnPr9QG4gGmtzKYA9mPRDbnhyA%2BVqSt7aEkT461znOIGtGGgVwU3%2FIpZx3ONUeJC9jnDUrsgsfehwHmHGNTekVEwdBqwSCNqXILs%2F8%2FSKJsswM%2BSMEAGChhA3UCo7IHindWgnAQUDzZPNk7wHLAlo%2FhmAeieZfWCMsAzej8fPC8hzKoEqK0s3ZOEiv79bWp%2BDgwn0VqvF54yOtp2PfvlVNDWK%2BnTJsLiFvnbBoJgp2JMrrQ9MG7j9FfKzJRUjVh97G2CgXhN1higcdtPx1I%2FnIg035UhN3HMflCys8hHldkCR2Ksh6WRI2VcCvsO5Ua%2Bfje%2Fc49Wg1CloP9PvS86KVtoD7tP7VXCdoBAuMIn4bqhGs%2F7S4I0uebDoXxjtQGDFDzgRGB%2FUfgfnMe1hWPtmolonwpiuRZLKQtePdBS0dBLkbviPsuc%2F3ZHBlmo%2B%2BJj1Jrxsv1sMD2z5d36gV1KfcXtNX6d57fuXXI8F%2F%2FdkUZl8q8vNqIpGfxhdx%2B7%2BClcjuXTfxxll8urcPwK7FpUQLDtFvAqXSda3dEef9%2F0wjJKfjk8OaxWvfLQj5T9c5Bwd9CtWXfrU4tWBEkpbN8k4noXIHlM3bKKPp8AGxlloCH3qW76OTtVdlvLk6cs%2Bl1e8lk2pdwwUh6y2sWEQ25cuYO3YnwOejiKBagj%2FL33z8tShKr2vf2UyA%2B45A%2FeAMLIPrBlfoKQEw9J5js90HNOEquQCTMSvGfnHA2AhmjdCp78gCDoZCEFQd8mipwvFPCNHgY%2Fd0PAAzJfI1hXPuyrzlZU1x8KOao3nAYN%2F6W%2B41XgJ7KLi2iuloC1qkZcwXX8zdomRbMck7GQJcw7twjc6Y0MSUHIcqpmD6G9vycKqNu95cZDKIIE%2Fb%2BY92%2ButFjGmyROm%2FLMt6g99jzf9ZRW8WtBQJzT6KCY4O7qYZ%2FzNa1VbCpx8yzGHEcA4U0tnTc5fLcyhVvlpe3gVe8OqehIEbpoDr9F4U2qeCbTuxQudxnySohQvui8xEHAxVUoz7JQFM0ukw75XDjqv1ypXioEwQsbYy%2Fd%2FmdQXzx0XAxocHtYsE7FKsEmlvarwVRRmQ8Co8AEz%2F7ZVbz6g%2B1lNrH1tn%2FOmY%2FmIG5hfaG8aCgBXJx%2BifJdmnD3Pwv80Z73e%2F5qyBq2TdLZ02tUurWVVOvHIs%2FBW42Ni2i7JykA7cNAhdtC67xtUxc9IiCj3Atr98nxZk4l0WZ%2BUuhQ0jrob67jLfZcSTmw3nzefF9u%2BydH1mNRGmQk0679LCR%2BHOevM%2FoQdK67JAMsZoMkOnAXLGcNAOdZkeMUl%2BgOUmbPgch%2B%2FSP1OpxzbX%2FPdRcyxdqe7clG9wIB%2Fjhoy6qXioTL15JVKLkW%2BBhJDsupCq4Kd74CmpRlKhNROZJStaK006q6sEN3gdFJ%2BMD5hcDXrOnEaAQe%2BbFIvmWGAnEEOrIh41KHfZ%2BJW0y72k7w8j3oEJCHuvlitPVSYjKxoIl94We4iWLDqh7uh%2BdcVWVujLHaGqosaX9ikZcr5icOEigKcHWBQn2NLG1xDTTDG%2BOdgVobDq6cc8BOBFhXhJwKJY9kDjFCYBKt3iJpOpqvea9KNnP%2BO1idk2qRn9nWkPQu1gXvTG49LIGb8hxIk0JkG%2FdOdp0a6sRnqT7%2Bko1KY5t4x5DOGm%2B9Ol18ujs0ofUa4wKCpZAOtYIJDRaEKulqmL7RlxgIz71IqpIqK5x8hIFGYpc%2BVmzB28kk3V1BjEjmQa2E077QEo6NID8tTDaXDaX1QYDr3DFwh%2BJM6oMqLCzuacu3VOYfMQU%2Fq7IzPHRQbNrLp899aD1oBglSY42f75o2rsAsz%2BZzP%2ByY0EgXbpckCmQ5%2BqTw5q24JJr5wVdjGkXi%2F9HA4JHnl3sT2mU9UaP4tfjzaF4UJAbw4bMzlx%2F4ujwF2E8mGaZ1m4sxXWvZDIBlkXiWWOJjVONJSIKoK3S0XmR1weNWSW%2FKzodbAtbZ055WrogwcsgLnGJY5gK3i2W9ROYKO24HeRrnpVVADKo7fBdI8gkiXARZymaWAqUBQIbR8xpK4leuQ8HeNpTPdXYEdeCnN3M8x4mCYLz9Raos97e70L2b2cjPVaTRDrIT5pTvbtEuTEbWf%2BRk35euTFTaAHYoP2ti4bebsqarEPW6Y0UdLWcCtjePloDeRNDMOGbltP2E6GnL2DxPeOnaepYo%2FlCyfwKRaCCx7gSNk8A0k5Ez2V4CDot35d2%2BBuJYiT2paE5tB7zKVcnM9ssvtiMnJRa12MQRxz0Riy5VZfGiHsHmauRLeJ25nSP3CvCUwNN2bNP35YYy%2BzJbCW%2FdvnT07V5wHfMD2TdfqlsqjITGxp1MzEGl7nTbNcx6z09w6mbygtE4oDW7G7NPZJ%2BYP0ZAZKfnUjR6yKypQR%2B9S0j39k4dbQGw2drzMfu9I63QHTSckvN3r7agheT641IBUzZ2NJWDoqoDLTMtuNAPUpA%2Ff%2FSiPPQQYVNnXiV1bAl1SR1oOZpEFZe%2FMYxeIkw1b8EfO4TF2yPBBbWZXEqhlklQhCZVEgLcXQ12ahn%2BI8Sx40SrrDYP4F4KqfG1wbooEN4dNcr0MpztbA3BKnQQcH42QyAcJVu1rPbERVk64zmqbZA3EK3nFebKJHLvm%2FuVRYNuRbpldGDl6Hvm3WqScEPJxdzipsrrrGBXgUXpjW9Pzx9aR%2FbWqZN2ieNVDiraY%2BwKqBNOoQS6ajqZw25IlEPM1hImpE8ZQmYBeWZFsy4rHdgCiJXX6AZ2pZWqFPIENQURR%2BpUgTtaxO3EkgnLXATsYMVl4eSPw05SYqv5o2QxMAfS1QmpC%2B51%2BfpinU%2BTgV%2FkrVZOX6iyOQmVK0VTQXjSuoD8m96H00AdXDZMdy1k1sBQfQac1XwTI%2FibVYiAF5AXFFHmiPgRWrTYsUZdkY%2BbsRnDHdMYOL8lJPyUbIp1sl0DIgT1A3GZdiR268CNpQqsupUdbCV1N2Diq%2FJEGLCJJQ8d4LL2zwBD6mT%2FHjsVMas3HRTapBH7wwN61mTyNd762B0GfZjpl1pPe%2BV2Xq3I7zBQCN6CAFETFJbOiOiEia2MGK%2FOl%2F9AmcLfzLu6x9aNN%2Bb3QBBwp0atjHpT6O1vSt%2Bv1rAB7UudfbBF%2Fm335T2%2FD5iRBf19Gb%2FiBI0CnVV%2Fe2I9nY%2BxEIheRzz2NCz0xTptAuhUvEUlil%2B3bvn0kNIQUJi9b9ga23BtxAbxfKm8uHlHTQMeMynaAXjvVkhrV10ME5c4RFLYOAv0SXQ09yg2nNu%2B4fZNDaIs2hZhjLSAkUflYa%2FTVsiiEwjPca3NS8QGYTYYhbz5sELZ29m5tmvdrvzXc8275noDOmkRqh94FmRvLn3UcpPHhuG0C6%2BfaqxwbVwtZdcit%2F5AKGhfVbhg3R9W3BbrlL289LTwys3gMMa3%2B%2BUxtLcU2p9pYt31AzXOdCGpe5MklGpEeEWFHdMfxZZ6JlkhEZVRpGDqz12sVRZSj%2FYvNPNY5luhpcJ%2Bwb%2B00Ci4Q0bhofzNKIxAl%2F1zcvgbmcZwLVtjLXpzCxXnL2v0nnhR75DxzXgUj7WZQet%2F8N0adY72CpY946LMOrqe3enbf7WFmN%2BAcCrQ1TpxavvkThUalUg9epbED0oFazp7CepA5PdhYRzsOqVNuypO%2FpAC3cB3CujSsna%2BMLuwHZ9MRNxpRmevE35r%2FEjw%2FCN4fHM%2BuKM%2BvLw%2B%2FeMWaFpZL9pQup4bxoIduim0GqkJORub09JZEJONG%2FQ80hpq%2FUD3FfQZ2fmGdrD%2BE2stYM93Mk5%2BqGAGMjZwd6N8jU1I2zAxVXhD1uOsEEU%2FKfdXecuakk&__VIEWSTATEGENERATOR=7B9E3A74&__EVENTVALIDATION=3DdaK0VavnudXI0nrp1Y%2FwRCiZim%2Bx%2F6RH0SgGRJXAhLKIyL6D%2FwGG%2Fj8klI18fBo26G4ml9B2p%2BBeF%2BiSN6NTdHVmymfTIqCZOl8RYhbyzyDmbRsBGgbZH0kCMpaKaltsfOacP1ZK%2FlaJnuiKsOFpbrAKU%3D&__ASYNCPOST=true&`
@@ -153,77 +154,112 @@ func Get_Chongqing() {
 	//request.Header.Set("Cookie:", "ASP.NET_SessionId=fgz03kmkbe03u1uapopbejyr; UM_distinctid=162c8d253d2e5f-04f55d7fbea179-336b7b05-4b9600-162c8d253d33b8; CNZZDATA725126=cnzz_eid%3D969395611-1523785873-null%26ntime%3D1524028890")
 	request.Header.Set("Referer", "http://www.cqcp.net/game/ssc/")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36")
+	// 完成后断开连接
+	request.Header.Set("Connection", "close")
 
 	if err != nil {
 		fmt.Println("get response for strUrl=%s got error=%s\n", strUrl, err.Error())
 	}
 
-	var resp *http.Response
-	resp, err = http.DefaultClient.Do(request)
+	// 设置 TimeOut
+	DefaultClient := http.Client{
+		Transport: &http.Transport{
+			Dial: func(netw, addr string) (net.Conn, error) {
+				deadline := time.Now().Add(30 * time.Second)
+				c, err := net.DialTimeout(netw, addr, time.Second*30)
+				if err != nil {
+					return nil, err
+				}
+				c.SetDeadline(deadline)
+				return c, nil
+			},
+		},
+	}
+
+	//var resp *http.Response
+	resp, err := DefaultClient.Do(request)
 	if err != nil {
 		fmt.Println("get DefaultClient for strUrl=%s got error=%s\n", strUrl, err.Error())
 	}
+	// 保证I/O正常关闭
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("get ReadAll for strUrl=%s got error=%s\n", strUrl, err.Error())
-	}
+	// 判断返回状态
+	if resp.StatusCode == http.StatusOK {
 
-	testStr := string(body)
-	var dec mahonia.Decoder
-	//var enc mahonia.Encoder
-
-	dec = mahonia.NewDecoder("gb2312")
-	if ret, ok := dec.ConvertStringOK(testStr); ok {
-		//fmt.Println("GBK to UTF-8: ", ret)
-
-		//分析代码
-		regex1, _ := regexp.Compile("<li style='width:65px;'>(?sU:.*)</li>")
-		regex2 := regexp.MustCompile("<li style='width:80px;'>(?sU:.*)</li>")
-		//rxp_a := regexp.MustCompile(`<li style='width:80px; border-right:0px;'>大小单双</li></ul><ul>(.*?)</li></ul></div>`)
-		//rxp_b := regexp.MustCompile(`<li style='width:65px;'>(?sU:.*)</li>`)
-		//rxp_c := regexp.MustCompile(`<li style='width:80px;'>4-1-0-7-9</li>`)
-		des1 := regex1.FindAllStringSubmatch(ret, -1)
-		des2 := regex2.FindAllStringSubmatch(ret, -1)
-		//des := regex1.FindStringSubmatch(ret)
-		//code_a := rxp_a.FindAllStringSubmatch(ret, -1)
-
-		if len(des1) < 1 {
-			fmt.Println(errors.New("desc error get"))
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("get ReadAll for strUrl=%s got error=%s\n", strUrl, err.Error())
 		}
 
-		var resultballs string
-		for i, v := range des1 {
-			if i > 0 {
+		RegexChongqing(string(body))
+	} else {
+		x++
+		fmt.Println(fmt.Sprintf("获取页面状态失败，重新开始获取尝试%d次........", x))
+		goto LABEL1
+	}
 
-				li1 := strings.Replace(v[0], "<li style='width:65px;'>", "", -1)
-				li1 = strings.Replace(li1, "</li>", "", -1)
+	//bodyStr := string(body)
+	//fmt.Println("GBK to UTF-8: ", bodyStr)
+	//var dec mahonia.Decoder
+	//var enc mahonia.Encoder
+	//dec = mahonia.NewDecoder("gb2312")
+	//ret := dec.ConvertString(testStr)
+	//fmt.Println("GBK to UTF-8: ", ret)
+}
 
-				li2 := strings.Replace(des2[i][0], "<li style='width:80px;'>", "", -1)
-				li2 = strings.Replace(li2, "</li>", "", -1)
+func RegexChongqing(bodyStr string) {
 
-				li1 = "20" + li1
+	//分析代码
+	regex1, _ := regexp.Compile("<li style='width:65px;'>(?sU:.*)</li>")
+	regex2 := regexp.MustCompile("<li style='width:80px;'>(?sU:.*)</li>")
+	//rxp_a := regexp.MustCompile(`<li style='width:80px; border-right:0px;'>大小单双</li></ul><ul>(.*?)</li></ul></div>`)
+	//rxp_b := regexp.MustCompile(`<li style='width:65px;'>(?sU:.*)</li>`)
+	//rxp_c := regexp.MustCompile(`<li style='width:80px;'>4-1-0-7-9</li>`)
+	des1 := regex1.FindAllStringSubmatch(bodyStr, -1)
+	des2 := regex2.FindAllStringSubmatch(bodyStr, -1)
+	//des := regex1.FindStringSubmatch(ret)
+	//code_a := rxp_a.FindAllStringSubmatch(ret, -1)
 
-				list2 := strings.Split(li2, "-")
+	if len(des1) < 1 {
+		fmt.Println(errors.New("desc error get"))
+	}
 
-				for i, v := range list2 {
-					resultballs += v
-					if i < len(list2)-1 {
-						resultballs += ","
-					}
+	var resultballs string
+	for i, v := range des1 {
+		if i > 0 {
+
+			li1 := strings.Replace(v[0], "<li style='width:65px;'>", "", -1)
+			li1 = strings.Replace(li1, "</li>", "", -1)
+
+			li2 := strings.Replace(des2[i][0], "<li style='width:80px;'>", "", -1)
+			li2 = strings.Replace(li2, "</li>", "", -1)
+
+			li1 = "20" + li1
+
+			list2 := strings.Split(li2, "-")
+
+			for i, v := range list2 {
+				resultballs += v
+				if i < len(list2)-1 {
+					resultballs += ","
 				}
-				fmt.Println(li1, resultballs)
-				draws := &models.Draws{Resultballs: "[" + resultballs + "]"}
-
-				dno, err := strconv.ParseInt(li1, 10, 64)
-
-				if err == nil {
-					models.EditDraw(dno, 320, draws)
-				}
-
-				resultballs = ""
 			}
+
+			//打印添加结果
+			fmt.Println(li1, resultballs)
+
+			draws := &models.Draws{Resultballs: "[" + resultballs + "]"}
+
+			dno, err := strconv.ParseInt(li1, 10, 64)
+
+			if err == nil {
+				models.EditDraw(dno, 320, draws)
+			} else {
+				fmt.Println(err.Error())
+			}
+
+			resultballs = ""
 		}
 	}
 
@@ -248,6 +284,7 @@ func NewlottoChongqing() {
 	ts := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 
 	ls := time.Date(now.Year(), now.Month(), now.Day(), 1, 54, 0, 0, time.Local)
+
 	zs := time.Date(now.Year(), now.Month(), now.Day(), 9, 45, 0, 0, time.Local)
 
 	bs := time.Date(now.Year(), now.Month(), now.Day(), 9, 50, 0, 0, time.Local)

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -14,9 +13,6 @@ import (
 	"net/http/cookiejar"
 	"net/url" // exported package is phantomjs
 	"os"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -156,6 +152,7 @@ func RsaEncrypt(publicKey []byte, origData []byte) ([]byte, error) {
 	return rsa.EncryptPKCS1v15(rand.Reader, pub, origData)
 }
 
+/*
 func main() {
 
 	uname := ""
@@ -289,3 +286,4 @@ func main() {
 	//判断err_no=0为登录成功！其他代码可参考：https://bbs.125.la/thread-13881883-1-2.html
 
 }
+*/

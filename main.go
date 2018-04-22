@@ -1,20 +1,23 @@
 package main
 
 import (
-	"188betService/query"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"./query"
 )
 
 func main() {
 	//query.GetCQCP()
-	query.Get_Chongqing()
+	//query.Get_Chongqing()
+
 	//query.Get_Xinjiang()
 	//query.NewlottoXinjiang()
+
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
@@ -24,8 +27,11 @@ func main() {
 		query.NewlottoChongqing()
 		fmt.Println("计算下一个零点.自动添加第二天赛事", time.Now())
 	})
+	//timeCountDown(1, 0)
+	router.Run(":8888")
 
-	router.Run(":8886")
+	//models.InitData()
+
 }
 
 func startTimer1(f func()) {
@@ -102,6 +108,35 @@ func Ok10timer() {
 		for _ = range ticker.C {
 
 			query.Get_Chongqing()
+		}
+	}()
+}
+
+//倒计时
+func timeCountDown(minute, second int) {
+
+	formate := "04:05"
+
+	ts := time.Date(0, 0, 0, 0, minute, second, 0, time.Local)
+	ss, _ := time.ParseDuration("-1s")
+	//ets := ts.Add(durmi)
+	//var tss time.Time
+
+	fmt.Println("距离下一次开奖时间倒计时", ss)
+	ticker := time.NewTicker(time.Millisecond * 1000)
+	go func() {
+		for _ = range ticker.C {
+
+			ts = ts.Add(ss)
+
+			fmt.Println(ts.Format(formate))
+			//fmt.Printf(fmt.Sprintf("#%v", ts.Format(formate)))
+
+			if ts.Minute() == 0 && ts.Second() == 0 {
+				ts = time.Date(0, 0, 0, 0, minute, second, 0, time.Local)
+				fmt.Println("重新开始，距离下一次开奖时间倒计时")
+			}
+			//query.Get_Chongqing()
 		}
 	}()
 }
