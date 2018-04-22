@@ -16,7 +16,7 @@ func main() {
 	//query.Get_Chongqing()
 
 	//query.Get_Xinjiang()
-	//query.NewlottoXinjiang()
+	query.NewlottoXinjiang()
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
