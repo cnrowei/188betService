@@ -29,7 +29,6 @@ func init() {
 		db.LogMode(true)
 	}
 
-	//initData()
 }
 
 func InitData() {

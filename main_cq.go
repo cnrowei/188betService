@@ -64,38 +64,15 @@ func StartTimer(f func()) {
 //倒计时
 func timeCountDown(drawsno int64, drawstime time.Time) {
 	var minute, second int
-
 	now := time.Now()
-	ws1 := time.Date(now.Year(), now.Month(), now.Day(), 22, 00, 0, 0, time.Local)
-	ws2 := time.Date(now.Year(), now.Month(), now.Day(), 24, 00, 0, 0, time.Local)
-
-	ls1 := time.Date(now.Year(), now.Month(), now.Day(), 0, 00, 0, 0, time.Local)
-	ls2 := time.Date(now.Year(), now.Month(), now.Day(), 2, 00, 0, 0, time.Local)
-
-	sw1 := time.Date(now.Year(), now.Month(), now.Day(), 10, 00, 0, 0, time.Local)
-	sw2 := time.Date(now.Year(), now.Month(), now.Day(), 22, 00, 0, 0, time.Local)
+	ws := time.Date(now.Year(), now.Month(), now.Day(), 22, 00, 0, 0, time.Local)
+	ls := time.Date(now.Year(), now.Month(), now.Day()+1, 2, 00, 0, 0, time.Local)
+	zs := time.Date(now.Year(), now.Month(), now.Day(), 10, 00, 0, 0, time.Local)
 
 	formate := "04:05"
-	var strss string
-	//晚上1
-	if (now.Unix() >= ws1.Unix() && now.Unix() <= ws2.Unix()) || (now.Unix() >= ls1.Unix() && now.Unix() <= ls2.Unix()) {
-		strss = "5m"
-	}
-
-	//10点到2点5分钟一期
-	if now.Unix() >= sw1.Unix() && now.Unix() <= sw2.Unix() {
-		strss = "10m"
-	}
-
-	if now.Unix() >= ls2.Unix() && now.Unix() <= sw1.Unix() {
-		strss = "480m"
-	}
-
-	fmt.Println("strss", strss)
-	fmt.Println("drawstime", drawstime)
 
 	ss, _ := time.ParseDuration("-1s")
-	sss, _ := time.ParseDuration(strss)
+	sss, _ := time.ParseDuration("10m")
 
 	dt := drawstime.Add(sss)
 	subm := dt.Sub(now)
@@ -111,15 +88,14 @@ func timeCountDown(drawsno int64, drawstime time.Time) {
 	//var tss time.Time
 	ts := time.Date(0, 0, 0, 0, minute, second, 0, time.Local)
 
-	//fmt.Println("距离下一次开奖时间倒计时", second)
-	var keys string = "D.Time"
+	fmt.Println("距离下一次开奖时间倒计时", second)
 	ticker := time.NewTicker(time.Millisecond * 1000)
 	go func() {
 		for _ = range ticker.C {
 
 			ts = ts.Add(ss)
 
-			fmt.Println("["+keys+"]", ts.Format(formate))
+			fmt.Println("[DownTime]", ts.Format(formate))
 
 			if ts.Minute() == 0 && ts.Second() == 0 {
 
@@ -128,26 +104,27 @@ func timeCountDown(drawsno int64, drawstime time.Time) {
 				if id == drawsno {
 					minute = 0
 					second = 10
-					keys = "10 Second Get Data"
+					fmt.Println("数据未更新/10秒后重新读取")
+
 				} else {
 
 					//晚上
-					if (now.Unix() >= ws1.Unix() && now.Unix() <= ws2.Unix()) || (now.Unix() >= ls1.Unix() && now.Unix() <= ls2.Unix()) {
+					if now.Unix() > ws.Unix() && now.Unix() < ls.Unix() {
 						minute = 5
 						second = 0
 					}
 
 					//10点到2点5分钟一期
-					if now.Unix() >= sw1.Unix() && now.Unix() <= sw2.Unix() {
+					if now.Unix() > zs.Unix() && now.Unix() < ws.Unix() {
 						minute = 10
 						second = 0
 					}
 
-					if now.Unix() >= ls2.Unix() && now.Unix() <= sw1.Unix() {
+					if now.Unix() > ls.Unix() && now.Unix() < zs.Unix() {
 						minute = 480
 						second = 0
 					}
-					keys = "D.Time"
+
 					query.WagersChongqing()
 				}
 

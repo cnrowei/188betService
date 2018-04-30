@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -43,18 +44,20 @@ type Selections struct {
 
 //下注
 type Wagers struct {
-	Wagerno      int64        `gorm:"AUTO_INCREMENT" json:"wagerNo"`
-	Counterid    int64        `gorm:"index" json:"counterId"`
-	Drawno       int64        `gorm:"index" json:"drawNo"`
-	Selections   []Selections `json:"selections"`
-	Stake        float64      `gorm:"type:numeric(18,4)" json:"stake"`
-	Estwinning   float64      `gorm:"type:numeric(18,1)"json:"estWinning"`
-	Issystempick bool         `json:"isSystemPick"`
-	Bettype      string       `gorm:"type:varchar(50)" json:"betType"`
-	Bets         string       `gorm:"type:json" json:"bets"`
-	Selection    string       `gorm:"type:varchar(50)" json:"selection"`
-	Returnamount float64      `gorm:"type:numeric(10,1)" json:"returnAmount"`
-	Createtime   time.Time    `json:"createTime"`
+	Id           int64     `gorm:"index" json:"wagerNo"`                   //编号
+	Uid          int64     `gorm:"index" json:"Uid"`                       //类型
+	Counterid    int64     `gorm:"index" json:"counterId"`                 //类型
+	Drawno       int64     `gorm:"index" json:"drawNo"`                    //期数
+	Selections   string    `gorm:"type:json" json:"selections"`            //单注的信息
+	Stake        float64   `gorm:"type:numeric(18,4)" json:"stake"`        //投注的金额
+	Estwinning   float64   `gorm:"type:numeric(18,1)" json:"estWinning"`   //可盈利
+	Issystempick bool      `json:"isSystemPick"`                           //系统选取
+	Bettype      string    `gorm:"type:varchar(50)" json:"betType"`        //投注类型 num
+	Bettext      string    `gorm:"type:varchar(50)" json:"Bettext"`        //投注中文
+	Selection    string    `gorm:"type:varchar(50)" json:"selection"`      //投注类型 num
+	Returnamount float64   `gorm:"type:numeric(10,1)" json:"returnAmount"` //返还金额
+	Status       int       `json:"status"`                                 //-1输,0未结算,1为赢 输赢状态
+	Createtime   time.Time `json:"createTime"`                             //下单时间
 }
 
 //类型
@@ -66,6 +69,54 @@ type Bets struct {
 	Bettype   string  `gorm:"type:varchar(50)" json:"betType"`
 	Selection string  `gorm:"type:varchar(50)" json:"selection"`
 	Odds      float64 `gorm:"type:numeric(18,4)" json:"odds"`
+}
+
+//下注列表
+func GetWagers(counterid int64, drawno int64) ([]*Wagers, error) {
+	//list := &[]Counters{}
+	var lists []*Wagers
+	err := db.Where("counterid=? and drawno=? and status=?", counterid, drawno, 0).Find(&lists).Error
+	return lists, err
+}
+
+//下注列表
+func GetWagersStatus() ([]*Wagers, error) {
+	//list := &[]Counters{}
+	var lists []*Wagers
+	err := db.Where("status=?", -1).Find(&lists).Error
+	return lists, err
+}
+
+//更新输赢
+func EditWagers(wagerno int64, status int) (int64, error) {
+	info := &Wagers{}
+	fmt.Println("edit status:", status)
+	edit := &Wagers{Status: status}
+
+	if err := db.Model(&info).Where("wagerno = ?", wagerno).UpdateColumns(edit).Error; err == nil {
+		return edit.Id, nil
+	} else {
+		return -1, err
+	}
+}
+
+//更新输赢
+func UpWagers(wager *Wagers, status int) (int64, error) {
+	if err := db.Model(&wager).Update("status", status).Error; err == nil {
+		return wager.Id, nil
+	} else {
+		return 0, err
+	}
+
+	// info := &Wagers{}
+	// // fmt.Println("edit status:", status)
+	// // edit := &Wagers{Status: status}
+
+	// if err := db.Model(&info).Where("wagerno = ?", wagerno).UpdateColumns(&wager).Error; err == nil {
+	// 	return info.Wagerno, nil
+	// } else {
+	// 	return -1, err
+	// }
 }
 
 //彩票列表
@@ -143,6 +194,21 @@ func NewDraw(draw *Draws) (int64, error) {
 func EditDraw(drawNo int64, counterId int64, draw *Draws) {
 	info := &Draws{}
 	if err := db.Where("drawNo=? and counterId=?", drawNo, counterId).Find(info).Error; err == nil {
-		db.Model(&info).Where("counterId = ?", counterId).UpdateColumns(draw)
+		if info.Resultballs == "" {
+			db.Model(&info).Where("counterId = ?", counterId).UpdateColumns(draw)
+		}
 	}
+}
+
+//获取期数
+func GetDrawno(nowTime time.Time, counterId int64) (*Draws, error) {
+	info := &Draws{}
+	err := db.Where("starttime<=? and endtime>=? and counterid=?", nowTime, nowTime, counterId).Find(info).Error
+	if err == nil {
+
+		fmt.Println(info.Id)
+		info.Id = info.Id - 1
+		err = db.Find(info).Error
+	}
+	return info, err
 }
