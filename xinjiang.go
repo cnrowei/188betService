@@ -9,22 +9,88 @@ import (
 	"./query"
 )
 
+// <div class="sidebar-reviews">
+
+// 		<a class="header-sm" href="http://www.metalsucks.net/category/reviews/">Album Reviews</a>
+
+// 			<article class="clearfix">
+// 				<div class="thumb">
+// 					<a href="http://www.metalsucks.net/2018/04/30/album-review-at-the-gates-to-drink-from-the-night-itself/"><img src="http://www.metalsucks.net/wp-content/uploads/2018/02/To-Drink-from-the-Night-Itself-150x150.jpg"></a>
+// 				</div>
+// 				<div class="content-block">
+// 					<a class="header-xs" href="http://www.metalsucks.net/2018/04/30/album-review-at-the-gates-to-drink-from-the-night-itself/">At the Gates</a>
+// 					<i>To Drink from the Night Itself</i>
+// 					<div class="rating">
+// 						<span>Rating</span>
+// 						<img src="http://www.metalsucks.net/wp-content/themes/metalsucks.v5/images/ratings/rating-35.svg">
+// 					</div>
+// 				</div>
+// 			</article>
+
+func ExampleScrape() {
+
+	// Request the HTML page.
+	// res, err := http.Get("http://www.xjflcp.com/game/sscIndex")
+	// //res, err := http.Get("http://metalsucks.net")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer res.Body.Close()
+	// if res.StatusCode != 200 {
+	// 	log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+	// }
+
+	// // Load the HTML document
+	// doc, err := goquery.NewDocumentFromReader(res.Body)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// doc.Find("div.con_left").Each(func(i int, s *goquery.Selection) {
+	// 	// For each item found, get the band and title
+	// 	band := s.Find("p span").Text()
+	// 	title := s.Find("div.kj_ball").Text()
+	// 	band = strings.Replace(band, " ", "", -1)
+	// 	band = Substr(band, 0, 10)
+	// 	title = strings.Replace(title, " ", "", -1)
+	// 	title = strings.Replace(title, "\n", ",", -1)
+	// 	title = Substr(title, 1, 9)
+
+	// 	fmt.Printf("Review %d: %s - %s\n", i, band, title)
+	// 	//fmt.Printf(band)
+	// })
+
+	// // Find the review items
+	// doc.Find(".sidebar-reviews article .content-block").Each(func(i int, s *goquery.Selection) {
+	// 	// For each item found, get the band and title
+	// 	band := s.Find("a").Text()
+	// 	title := s.Find("i").Text()
+	// 	fmt.Printf("Review %d: %s - %s\n", i, band, title)
+	// })
+}
+
 func main() {
+
+	//ExampleScrape()
+
+	// id, tt := query.Get_Xinjiang()
+	// fmt.Println(id, tt)
+
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
-	id, ts := query.Get_Chongqing()
-	query.WagersChongqing()
+	id, ts := query.Get_Xinjiang()
+	query.WagersXinjiang()
 
 	fmt.Println(id, ts)
 	timeCountDown(id, ts)
 
 	StartTimer(func() {
-		query.NewlottoChongqing()
+		query.NewlottoXinjiang()
 		fmt.Println("添加第二天的赛事。", time.Now())
 	})
 
-	router.Run(":8888")
+	router.Run(":8887")
 
 }
 
@@ -65,11 +131,11 @@ func StartTimer(f func()) {
 func timeCountDown(drawsno int64, drawstime time.Time) {
 	var minute, second int
 	now := time.Now()
-	ws := time.Date(now.Year(), now.Month(), now.Day(), 22, 00, 0, 0, time.Local)
-	ls := time.Date(now.Year(), now.Month(), now.Day()+1, 2, 00, 0, 0, time.Local)
+	//ws := time.Date(now.Year(), now.Month(), now.Day(), 22, 00, 0, 0, time.Local)
+	ls := time.Date(now.Year(), now.Month(), now.Day(), 2, 00, 0, 0, time.Local)
 	zs := time.Date(now.Year(), now.Month(), now.Day(), 10, 00, 0, 0, time.Local)
 
-	formate := "04:05"
+	formate := "00:04:05"
 
 	ss, _ := time.ParseDuration("-1s")
 	sss, _ := time.ParseDuration("10m")
@@ -88,7 +154,7 @@ func timeCountDown(drawsno int64, drawstime time.Time) {
 	//var tss time.Time
 	ts := time.Date(0, 0, 0, 0, minute, second, 0, time.Local)
 
-	fmt.Println("距离下一次开奖时间倒计时", second)
+	fmt.Println("距离下一次开奖时间倒计时", ts)
 	ticker := time.NewTicker(time.Millisecond * 1000)
 	go func() {
 		for _ = range ticker.C {
@@ -97,9 +163,9 @@ func timeCountDown(drawsno int64, drawstime time.Time) {
 
 			fmt.Println("[DownTime]", ts.Format(formate))
 
-			if ts.Minute() == 0 && ts.Second() == 0 {
+			if ts.Minute() == 0 && ts.Second() == 0 && ts.Hour() == 0 {
 
-				id, _ := query.Get_Chongqing()
+				id, _ := query.Get_Xinjiang()
 
 				if id == drawsno {
 					minute = 0
@@ -109,27 +175,23 @@ func timeCountDown(drawsno int64, drawstime time.Time) {
 				} else {
 
 					//晚上
-					if now.Unix() > ws.Unix() && now.Unix() < ls.Unix() {
-						minute = 5
-						second = 0
-					}
+					nw := time.Now()
 
-					//10点到2点5分钟一期
-					if now.Unix() > zs.Unix() && now.Unix() < ws.Unix() {
+					if nw.Unix() > ls.Unix() && nw.Unix() < zs.Unix() {
+
+						minute = 480
+						second = 0
+					} else {
 						minute = 10
 						second = 0
 					}
 
-					if now.Unix() > ls.Unix() && now.Unix() < zs.Unix() {
-						minute = 480
-						second = 0
-					}
-
-					query.WagersChongqing()
+					query.WagersXinjiang()
 				}
 
 				ts = time.Date(0, 0, 0, 0, minute, second, 0, time.Local)
-				fmt.Println("重新开始，距离下一次开奖时间倒计时")
+				fmt.Println("minute/second:", minute, second)
+				fmt.Println("重新开始，距离下一次开奖时间倒计时,ts:", ts)
 			}
 			//query.Get_Chongqing()
 		}

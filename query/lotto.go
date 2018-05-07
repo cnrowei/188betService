@@ -48,7 +48,7 @@ func NewlottoXinjiang() {
 	now := time.Now()
 	ts := time.Date(now.Year(), now.Month(), now.Day(), 10, 0, 0, 0, time.Local)
 
-	strt = ts.Format("20060102000")
+	strt = ts.Format("2006010200")
 	t, _ = strconv.ParseInt(strt, 10, 64)
 
 	durmi, _ := time.ParseDuration("+10m")
@@ -85,7 +85,7 @@ func NewlottoXinjiang() {
 			Betclosedmmss:   "00:00",
 			Isclosemanually: false,
 			Voidreason:      0,
-			Resultballs:     "[]",
+			Resultballs:     "",
 		}
 
 		if has := models.CheckDraw(t, 360); has {
@@ -95,39 +95,6 @@ func NewlottoXinjiang() {
 		}
 
 	}
-}
-
-func Get_Chongqing() (drawno int64, darwtime time.Time) {
-
-	strUrl := "http://caipiao.163.com/t/awardlist.html?gameEn=ssc&pageNums=30&pageNo=1&cache=1524713847759"
-	Referer := "http://caipiao.163.com/t/award/cqssc/"
-
-	body, err := GetRequested(strUrl, Referer)
-	if err != nil {
-		fmt.Println("get response for strUrl=%s got error=%s\n", strUrl, err.Error())
-	}
-
-	var caipao Caipiao163
-	if err := json.Unmarshal(body, &caipao); err == nil { //json解析到结构体里面
-
-		if len(caipao.List) > 0 {
-			RegexChongqing(caipao.List)
-			//drawno
-			drawsno, err := strconv.ParseInt("20"+caipao.List[0].Period, 10, 64)
-			if err != nil {
-				fmt.Println("get  drawsno=%s got error=%s\n", drawsno, err.Error())
-			}
-			//drawtime
-			drawtime, err := time.ParseInLocation("2006-01-02 15:04:05", caipao.List[0].Date, time.Local)
-			if err != nil {
-				fmt.Println("get  drawsno=%s got error=%s\n", drawtime, err.Error())
-			}
-
-			return drawsno, drawtime
-
-		}
-	}
-	return 0, time.Now()
 }
 
 type Caipiao163 struct {
@@ -141,49 +108,6 @@ type List struct {
 	Number  string `json:"number"`
 	Period  string `json:"period"`
 	Xingtai string `json:"xingtai"`
-}
-
-func RegexChongqing(lists []List) {
-
-	timeLayout := "2006-01-02 15:04:05" //转化所需模板
-	//var err error
-
-	//循环
-	for _, v := range lists {
-		var resultballs string
-
-		drawtime, err := time.ParseInLocation(timeLayout, v.Date, time.Local)
-
-		if err != nil {
-			drawtime = time.Now()
-		}
-
-		//number := ReplaceString(v.Number, " ", ",")
-		arr := strings.Split(v.Number, " ")
-
-		for i := 4; i >= 0; i-- {
-
-			resultballs += arr[i]
-
-			if i > 0 {
-				resultballs += ","
-			}
-		}
-
-		draws := &models.Draws{}
-		draws.Resultballs = resultballs
-		draws.Drawtime = drawtime
-		draws.Drawstatus = 5
-
-		drawsno, err := strconv.ParseInt("20"+v.Period, 10, 64)
-		if err == nil {
-			models.EditDraw(drawsno, 320, draws)
-			//打印添加结果
-			fmt.Println(v.Period, resultballs)
-		} else {
-			fmt.Println(err.Error())
-		}
-	}
 }
 
 func DrawsChongqing() {
@@ -255,41 +179,542 @@ LABEL1:
 	}
 }
 
-func Get_Xinjiang() {
-	strUrl := "http://www.xjflcp.com/game/sscIndex"
-	request, err := http.NewRequest("GET", strUrl, nil)
-	request.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+//获取流媒体
+func GetRequestedPost(urls, referer string, post_data string) ([]byte, error) {
+	x := 1
+LABEL1:
+	strUrl := urls
+
+	request, err := http.NewRequest("POST", strUrl, strings.NewReader(post_data))
+	request.Header.Set("Accept", "*/*")
 	request.Header.Set("Accept-Encoding", "")
-	request.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,ja;q=0.88")
+	request.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,ja;q=0.8")
 	request.Header.Set("Cache-Control", "no-cache")
 	request.Header.Set("Connection", "keep-alive")
-	request.Header.Set("Content-Length", "8756")
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	request.Header.Set("Host", "www.xjflcp.com")
-	request.Header.Set("Upgrade-Insecure-Requests", "1")
-	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36")
+	//request.Header.Set("Host", "caipiao.163.com")
+	request.Header.Set("Pragma", "no-cache")
+	request.Header.Set("Referer", referer)
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Mobile Safari/537.36")
+	request.Header.Set("X-Requested-With", "XMLHttpRequest")
 
 	if err != nil {
-		fmt.Println("Error response for strUrl=%s got error=%s\n", strUrl, err.Error())
+		return nil, err
+	}
+	// 设置 TimeOut
+	DefaultClient := http.Client{
+		Transport: &http.Transport{
+			Dial: func(netw, addr string) (net.Conn, error) {
+				deadline := time.Now().Add(30 * time.Second)
+				c, err := net.DialTimeout(netw, addr, time.Second*30)
+				if err != nil {
+					return nil, err
+				}
+				c.SetDeadline(deadline)
+				return c, nil
+			},
+		},
 	}
 
-	var resp *http.Response
-	resp, err = http.DefaultClient.Do(request)
+	//var resp *http.Response
+	resp, err := DefaultClient.Do(request)
 	if err != nil {
-		fmt.Println("get DefaultClient for strUrl=%s got error=%s\n", strUrl, err.Error())
+		return nil, err
 	}
+	// 保证I/O正常关闭
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	// 判断返回状态
+	if resp.StatusCode == http.StatusOK {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return body, nil
+
+	} else {
+		x++
+		fmt.Println(fmt.Sprintf("获取页面状态失败，重新开始获取尝试%d次........", x))
+		goto LABEL1
+	}
+}
+
+func RegexChongqing(lists []List) {
+	timeLayout := "2006-01-02 15:04:05" //转化所需模板
+	//循环
+	for _, v := range lists {
+		var resultballs string
+		drawtime, err := time.ParseInLocation(timeLayout, v.Date, time.Local)
+		if err != nil {
+			drawtime = time.Now()
+		}
+		//number := ReplaceString(v.Number, " ", ",")
+		arr := strings.Split(v.Number, " ")
+		for i := 4; i >= 0; i-- {
+			resultballs += arr[i]
+			if i > 0 {
+				resultballs += ","
+			}
+		}
+
+		draws := &models.Draws{}
+		draws.Resultballs = resultballs
+		draws.Drawtime = drawtime
+		draws.Drawstatus = 5
+
+		drawsno, err := strconv.ParseInt("20"+v.Period, 10, 64)
+		if err == nil {
+			models.EditDraw(drawsno, 320, draws)
+			//打印添加结果
+			fmt.Println(v.Period, resultballs)
+		} else {
+			fmt.Println(err.Error())
+		}
+	}
+}
+
+func Get_Chongqing() (drawno int64, darwtime time.Time) {
+
+	strUrl := "http://caipiao.163.com/t/awardlist.html?gameEn=ssc&pageNums=30&pageNo=1&cache=1524713847759"
+	Referer := "http://caipiao.163.com/t/award/cqssc/"
+LABEL1:
+	body, err := GetRequested(strUrl, Referer)
 	if err != nil {
-		fmt.Println("get ReadAll for strUrl=%s got error=%s\n", strUrl, err.Error())
+		fmt.Println("get response for strUrl=%s got error=%s\n", strUrl, err.Error())
+		goto LABEL1
 	}
 
-	testStr := string(body)
+	var caipao Caipiao163
+	if err := json.Unmarshal(body, &caipao); err == nil { //json解析到结构体里面
 
-	fmt.Println(testStr)
+		if len(caipao.List) > 0 {
+			RegexChongqing(caipao.List)
+			//drawno
+			drawsno, err := strconv.ParseInt("20"+caipao.List[0].Period, 10, 64)
+			if err != nil {
+				fmt.Println("get  drawsno=%s got error=%s\n", drawsno, err.Error())
+			}
+			//drawtime
+			drawtime, err := time.ParseInLocation("2006-01-02 15:04:05", caipao.List[0].Date, time.Local)
+			if err != nil {
+				fmt.Println("get  drawsno=%s got error=%s\n", drawtime, err.Error())
+			}
+
+			return drawsno, drawtime
+
+		}
+	}
+	return 0, time.Now()
+}
+
+func Get_Xinjiang() (int64, time.Time) {
+
+	type AutoGenerated struct {
+		CreateTime struct {
+			Date           int   `json:"date"`
+			Day            int   `json:"day"`
+			Hours          int   `json:"hours"`
+			Minutes        int   `json:"minutes"`
+			Month          int   `json:"month"`
+			Seconds        int   `json:"seconds"`
+			Time           int64 `json:"time"`
+			TimezoneOffset int   `json:"timezoneOffset"`
+			Year           int   `json:"year"`
+		} `json:"createTime"`
+		LotteryIssue  string `json:"lotteryIssue"`
+		LotteryNumber string `json:"lotteryNumber"`
+	}
+
+	formate := "20060102"
+
+	postnow := time.Now()
+	ls1 := time.Date(postnow.Year(), postnow.Month(), postnow.Day(), 0, 00, 0, 0, time.Local)
+	ls2 := time.Date(postnow.Year(), postnow.Month(), postnow.Day(), 2, 00, 0, 0, time.Local)
+
+	if postnow.Unix() > ls1.Unix() && postnow.Unix() < ls2.Unix() {
+		postnow = postnow.AddDate(0, 0, -1)
+	}
+
+	strUrl := "http://www.xjflcp.com/game/SelectDate"
+	Referer := "http://www.xjflcp.com/game/sscAnnounce"
+	post_data := "selectDate=" + postnow.Format(formate)
+
+LABEL1:
+	body, err := GetRequestedPost(strUrl, Referer, post_data)
+	if err != nil {
+		fmt.Println("get response for strUrl=%s got error=%s\n", strUrl, err.Error())
+		goto LABEL1
+	}
+
+	var data []AutoGenerated
+	now := time.Now()
+
+	if err := json.Unmarshal(body, &data); err == nil { //json解析到结构体里面
+
+		if len(data) > 0 {
+
+			for _, v := range data {
+				drawtime := time.Date(now.Year(), now.Month(), v.CreateTime.Date, v.CreateTime.Hours, v.CreateTime.Minutes, v.CreateTime.Seconds, 0, time.Local)
+				fmt.Println(drawtime.Format("2006-01-02 15:04:05 PM"), v.LotteryNumber)
+
+				var resultballs string
+				if err != nil {
+					drawtime = time.Now()
+				}
+
+				arr := strings.Split(v.LotteryNumber, ",")
+				for i := 4; i >= 0; i-- {
+					resultballs += arr[i]
+					if i > 0 {
+						resultballs += ","
+					}
+				}
+
+				draws := &models.Draws{}
+				draws.Resultballs = resultballs
+				draws.Drawtime = drawtime
+				draws.Drawstatus = 5
+
+				drawsno, err := strconv.ParseInt(v.LotteryIssue, 10, 64)
+				if err == nil {
+					models.EditDraw(drawsno, 360, draws)
+					//打印添加结果
+					fmt.Println("更新成功:", drawsno, resultballs)
+				} else {
+					fmt.Println(err.Error())
+				}
+			}
+			drawsno, err := strconv.ParseInt(data[0].LotteryIssue, 10, 64)
+			if err != nil {
+				fmt.Println("get  drawsno=%s got error=%s\n", drawsno, err.Error())
+			}
+			drawtime := time.Date(now.Year(), now.Month(), data[0].CreateTime.Date, data[0].CreateTime.Hours, data[0].CreateTime.Minutes, data[0].CreateTime.Seconds, 0, time.Local)
+
+			return drawsno, drawtime
+		}
+	}
+	return 0, time.Now()
 
 }
+
+/*
+func Get_Xinjiang() (int64, time.Time) {
+
+	type AutoGenerated struct {
+		CreateTime struct {
+			Date           int   `json:"date"`
+			Day            int   `json:"day"`
+			Hours          int   `json:"hours"`
+			Minutes        int   `json:"minutes"`
+			Month          int   `json:"month"`
+			Seconds        int   `json:"seconds"`
+			Time           int64 `json:"time"`
+			TimezoneOffset int   `json:"timezoneOffset"`
+			Year           int   `json:"year"`
+		} `json:"createTime"`
+		LotteryIssue  string `json:"lotteryIssue"`
+		LotteryNumber string `json:"lotteryNumber"`
+	}
+
+	// Request the HTML page.
+	res, err := http.Get("http://www.xjflcp.com/game/sscIndex")
+	//res, err := http.Get("http://metalsucks.net")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+	}
+
+	// Load the HTML document
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	doc.Find("table.kj_tab tr").Each(func(i int, s *goquery.Selection) {
+
+		// For each item found, get the band and title
+		strno := s.Find("td.bold").Text()
+		strball := s.Find("td.kj_codes").Text()
+
+		fmt.Printf("Review %d: %s - %s\n", i, strno, strball)
+
+		if strno != "--" && strball != "--" {
+			var resultballs string
+
+			arr := strings.Split(strball, ",")
+			for i := 4; i >= 0; i-- {
+				resultballs += arr[i]
+				if i > 0 {
+					resultballs += ","
+				}
+			}
+
+			draws := &models.Draws{}
+			draws.Resultballs = resultballs
+			draws.Drawtime = time.Now()
+			draws.Drawstatus = 5
+
+			drawsno, err := strconv.ParseInt(strno, 10, 64)
+			if err == nil {
+				models.EditDraw(drawsno, 360, draws)
+				//打印添加结果
+				fmt.Println(drawsno, resultballs)
+			} else {
+				fmt.Println(err.Error())
+			}
+
+		}
+
+	})
+
+	var drawsno int64
+	doc.Find("div.con_left").Each(func(i int, s *goquery.Selection) {
+		// For each item found, get the band and title
+		strno := s.Find("p span").Text()
+		strball := s.Find("div.kj_ball").Text()
+		strno = strings.Replace(strno, " ", "", -1)
+		strno = Substr(strno, 0, 10)
+		strball = strings.Replace(strball, " ", "", -1)
+		strball = strings.Replace(strball, "\n", ",", -1)
+		strball = Substr(strball, 1, 9)
+
+		fmt.Printf("Review %d: %s - %s\n", i, strno, strball)
+
+		if strno != "" && strball != "" {
+			var resultballs string
+
+			arr := strings.Split(strball, ",")
+			for i := 4; i >= 0; i-- {
+				resultballs += arr[i]
+				if i > 0 {
+					resultballs += ","
+				}
+			}
+
+			draws := &models.Draws{}
+			draws.Resultballs = resultballs
+			draws.Drawtime = time.Now()
+			draws.Drawstatus = 5
+
+			drawsno, err := strconv.ParseInt(strno, 10, 64)
+			if err == nil {
+				models.EditDraw(drawsno, 360, draws)
+				//打印添加结果
+				fmt.Println(drawsno, resultballs)
+			} else {
+				fmt.Println(err.Error())
+			}
+		}
+	})
+	return drawsno, time.Now()
+}
+
+
+
+func Get_Xinjiang() (drawno int64) {
+
+	// Request the HTML page.
+	res, err := http.Get("http://www.xjflcp.com/game/sscIndex")
+	//res, err := http.Get("http://metalsucks.net")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+	}
+
+	// Load the HTML document
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	doc.Find("table.kj_tab tr").Each(func(i int, s *goquery.Selection) {
+		fmt.Printf("Review %d: %s - %s\n", i, band, title)
+
+		// For each item found, get the band and title
+		strno := s.Find("td.bold").Text()
+		strball := s.Find("td.kj_codes").Text()
+
+		if strno != "--" && strball != "--" {
+			var resultballs string
+
+			arr := strings.Split(strball, ",")
+			for i := 4; i >= 0; i-- {
+				resultballs += arr[i]
+				if i > 0 {
+					resultballs += ","
+				}
+			}
+
+			draws := &models.Draws{}
+			draws.Resultballs = resultballs
+			draws.Drawtime = time.Now()
+			draws.Drawstatus = 5
+
+			drawsno, err := strconv.ParseInt(strno, 10, 64)
+			if err == nil {
+				models.EditDraw(drawsno, 360, draws)
+				//打印添加结果
+				fmt.Println(v.Period, resultballs)
+			} else {
+				fmt.Println(err.Error())
+			}
+
+		}
+
+	})
+}
+*/
+//每天重庆棋盘
+func NewlottoChongqing() {
+
+	fmt.Print("New Draws 120 is Chongqing......")
+	//时间格式
+	//formate := "2006-01-02T15:04:05+08:00"
+	//time.ParseInLocation("2006-01-02 15:04:05", "2017-07-07 09:00:00", time.Local)
+
+	var starttime time.Time
+	var endtime time.Time
+
+	var t int64 //期数编号
+	var strt string
+	var edt time.Time
+
+	now := time.Now()
+	ts := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	ls := time.Date(now.Year(), now.Month(), now.Day(), 1, 54, 0, 0, time.Local)
+	zs := time.Date(now.Year(), now.Month(), now.Day(), 9, 45, 0, 0, time.Local)
+	bs := time.Date(now.Year(), now.Month(), now.Day(), 9, 50, 0, 0, time.Local)
+	//晚上
+	ws := time.Date(now.Year(), now.Month(), now.Day(), 21, 55, 0, 0, time.Local)
+
+	strt = ts.Format("20060102000")
+	t, _ = strconv.ParseInt(strt, 10, 64)
+
+	durmi, _ := time.ParseDuration("+5m")
+	start_durmi, _ := time.ParseDuration("-330s")
+
+	end_durmi, _ := time.ParseDuration("-30s")
+	day_durmi, _ := time.ParseDuration("+24h")
+
+	for i := 1; i <= 120; i++ {
+	LABEL:
+		if ts.Unix() > ls.Unix() && ts.Unix() <= zs.Unix() {
+			edt = ts.Add(durmi)
+			ts = edt
+			goto LABEL
+		}
+
+		if ts.Unix() <= ws.Unix() && ts.Unix() >= bs.Unix() {
+			durmi, _ = time.ParseDuration("+10m")
+			start_durmi, _ = time.ParseDuration("-11m")
+			//end_durmi, _ = time.ParseDuration("-5m")
+		} else {
+			durmi, _ = time.ParseDuration("+5m")
+			start_durmi, _ = time.ParseDuration("-6m")
+		}
+
+		edt = ts.Add(durmi)
+		ts = edt
+
+		starttime = ts.Add(start_durmi)
+		endtime = ts.Add(end_durmi)
+		t++
+
+		if i == 1 {
+			starttime = starttime.Add(day_durmi)
+		}
+
+		//fmt.Println("重庆时时彩数据添加成功", t, edt, ws, starttime, endtime)
+
+		//添加到数据
+		drawtime, _ := time.ParseInLocation("2006-01-02 15:04:05", "0001-01-01T00:00:00+08:00", time.Local)
+
+		draws := &models.Draws{
+			Counterid:       320,
+			Drawno:          t,
+			Drawtime:        drawtime,
+			Drawstatus:      4,
+			Starttime:       starttime,
+			Endtime:         endtime,
+			Betclosedmmss:   "00:00",
+			Isclosemanually: false,
+			Voidreason:      0,
+			Resultballs:     "",
+		}
+
+		if has := models.CheckDraw(t, 320); has {
+			falg, _ := models.NewDraw(draws)
+			fmt.Println("---------------------------------------------------------------------------")
+			fmt.Println("重庆时时彩数据添加成功", t, edt, ws, starttime, endtime, falg)
+		}
+
+	}
+
+}
+
+func Substr(str string, start int, length int) string {
+	rs := []rune(str)
+	rl := len(rs)
+	end := 0
+
+	if start < 0 {
+		start = rl - 1 + start
+	}
+	end = start + length
+
+	if start > end {
+		start, end = end, start
+	}
+
+	if start < 0 {
+		start = 0
+	}
+	if start > rl {
+		start = rl
+	}
+	if end < 0 {
+		end = 0
+	}
+	if end > rl {
+		end = rl
+	}
+
+	return string(rs[start:end])
+}
+
+//截取字符串 start 起点下标 end 终点下标(不包括)
+func Substr2(str string, start int, end int) string {
+	rs := []rune(str)
+	length := len(rs)
+
+	if start < 0 || start > length {
+		panic("start is wrong")
+	}
+
+	if end < 0 || end > length {
+		panic("end is wrong")
+	}
+
+	return string(rs[start:end])
+}
+
+/*
+ScriptManager1=UpdatePanel1%7ClnkBtnFirst
+&__EVENTTARGET=lnkBtnFirst
+&__EVENTARGUMENT=
+&__VIEWSTATE=WEbm%2B543tuXtFfJ3UZY3j1t2t65KnxycuAVUi5VecmFytQjobRYazzx14iuc9QZqAMJmS2QW6QJQ2wKgnsQQ0ypPhSI2mgLPFBryrZwnBubfQ1qsVtSWf9JoGVUSyOO2vHlLwXzZY5ODZn0xBTU0aeAeKzNyWKUs%2FKwCqT%2Bj67si1rFy7v%2B5YsXPjGYCjVkitrU87kM3RyvSTae9tByWfMi0noKxgvzGiEPR8402CdgOBPTns%2BZgTlykTja6BF6pSInH156pwYfYreYbJvqTTcCucv0LhfESzZ%2BuRbRMToTzqJ%2Bka6az4pxkfpgnPl34NhKT3IzlgzHQ1Tu0558PkRTWiVLzvfmw5EtUvbuiw9tRq5ZtVx%2FvW%2FcCUiket3vEdUx79pF161AAGpyvcPAw2DSvBQiqlj4BkWInhsjn3KEQvk71%2BkaEn%2BRwg84xIlXo3UKxiYPhaGCudkuXj79nSc6k2u5zPDGo%2BAZlt72fFS2sIFqMR%2FwghKrWh67gmPf2fn4AJH2R9QTzXWVfNgMoF1b6lFyND7FQPs3I6PPwDEilqpanaY2X9jUTBDpNDuWThSgicbaNQfRmw%2BRtbqZBWEn3GEoYGF82FOtbT9ZC1%2Bo2HB8ek2%2F7WQoohnQaPtr%2Bx%2ByJeqdaGLX%2BegTwWOaoQPRWukCfgjx0kio%2BOqHQU4rmT0Sgoq4APYJRK4peM9cWwAl92vN4hBdbYphWpS1kIV%2FnxzxA3w13%2FPoBk6gKxQx0ApO3fzNJ%2BvOqoQ89hDy%2BE0LV147BzOHBwWI8Rd2Rd%2BCVtUduBD1s6L3s%2FFD7pTdWCCdGyqVZTKOzRiwKutHzkDKuZZxNGkUQyisV0Ma8Hlp3jI4zC8RO6OzDO9ZPYLf4Kg3xh%2BHo3jC2GrT1Kl2B0F%2BR2vWwShBVuGctoGEyumI1NEPxE4x0sRrYvgNo7ie%2B2MyrAeVL41yaLhAzl25O7J2aSpU6Qxfp9H2pVQQu3CE%2F73nka0DYIw%2F2N8WHH8ZqQFrY7SuVSC9NTE980QaHCxWTebcvJOMfXvVOIlgSVq%2B19LRX9ldCY1pMrtcT2OYwGgny0riJMhTO%2FSHsVwVtORl8uzrzSLAURe%2BWXrK8SmXuw150I1%2FOFqftZm49ZHon6po1UGNFYIv%2FntHxTdvifleKmtBYRGnbfhZiNHhN%2BveyDUihJVo2FbuCjuVRx2sjIjRrd3uj8yupaUEV0%2BzxGZ6r1pfPhmjmBSBQ1lPCnnpOh8pVWhK55YGGOTfUBeS442xBHr%2BPBTGzK2CJotH6YwZC6Wzhg9wcBQLmeX0YbH1b3XNRg%2FGrJRf3Ood%2BJNt0fVmUM18Dyo0o7jtLHZ82HJJaUSbIMDhSfkMHq9IOsrEYSIbeTKHDUNoZdsa69KNguoIkA7axz2ietDUXmKOdM7Z6V70444BNKpB1prcvD1kXLMt3WiMVzTnhC1cJsf6nu%2FClzGFmkG9uJnETCjanCMe30B1nGlKc%2FG8XBhIC4W%2FDB%2BhTMAFXebEdw2RMpszkR3fG2oNZhDC8C8GBB5YPdgwcuDxhNN69ZQZkbAAfC8SHSCY7ZqHzEl9FWNL1z7MeMHYPbcGyO8VJs%2FisB82Qoi%2BXiYkCSf42z8F0RtgXZVvZr6Ka%2B3XzwZNgSReVz2Jtc72Kxbf2vleKq%2Bjt8iksyg7klDnpD5dUWpWl6166s1%2BQHa5fsGOrd4%2FCnEv78DD8bEPLuaT0uYXT3a34olaggJiOQ3FMWj4NL1nXJBM4Wnf6KfASd%2BvcvkRaaY8hpJ%2FxUtXpeXnvtFpg%2BRLJlBa5r9CcIgdf3vflArDd%2B70UWwAi2R%2FqlpYbSdvGkpZF%2BWrS8jCwkGr1%2BpswfXHdlu5wBR0VSZ0AkgzXj2JEgMmzrWNJ%2Fp00IBw%2FRZdL0glhYRwNVFq8Mj9oVNHlfOT7FG3zIz1TzcuJxUpoQgfHJXgRRnSDkoX5fHTw%2FwG6D3PZUndoQ%2ButSxmPET0txd6fNGHJXo06moYUnvJ0pLCOgFU355dmKHkR9H0bP6G1%2BMkoyfXFP7fnqLAJFeAWRTWLsS31dw6%2FpqtRRtllt4ma3Qjv1KThWTY%2FYuOhez98vaciEajwnccxVZk2L3odR4yynjCabmoTDk1Ib%2FCDmzHqWNAmDfrILhtBIWhEWqYZaBw9tqnWGnhJZ2gXIa9qRyo52btzxlfYBjvmfe7IX21in2xocHlw3cYQyDjHrgEmwZCaKRMCRm4F9vkdP7byPX4rmqXQoEj57dK3ENOX0G7MhribUd5RDC4MeHTNdMHN3RlpJ%2FKz8ERaG4Z1oXGfeDAo2p8353oa0Hz0cFTWh7%2BC9gXeAHCUrR2709FlAfoOVHZ66YpzLdBRhxwrs%2BZw2HWVO8rQqnNOHIJwmfps6Egq6d%2BaUyyDvPGkHOPNWiTBgpjJqZOT5dk1HcqD%2BWpFpmQW27HWIDNbo%2BRoThd3aOwiqBOK0OJ6DZYXZvbe9HcmxhtaNtt8yCsLgv%2BnPAO1zCchwg3MndR%2BbIKfMT5Zxjlfjfw9ix7CtNjThqL%2FiTZ8%2FliyHYJxHZftXtRkTeL57X%2BY39FtIOAtSwO%2FwXIOWUjOA6tdxtbiCwuWRZNv%2BsUSvaPcg9k5TTYeK1H%2F7gUsDU37CcSoVCNykXeUx7t9cCdfVR1fHcs%2BXxKRkzWBbTbdMxVP689W5ACWXPOXRdPGy6rFjBFI8EPPf4SuaK6yIfOgYWaRbh4AShjTLcEqWCRFs0YvBj3UHz6KVMEb%2Brc%2FPg%2F8btQPa47wDc1Dfmmevmpjgf%2FAeWjSZTfYnODsuLufx8UcUsVnExyEJv8hHwkXcrABwZDr%2F3suohKwUMUsQ9pfyyrmcu6EPcLawizmMIQAAYe%2Bu9s3Kj9NV8tImOeppSu0g%2FCTB644%2BctSZld9K7a6oGzC%2B%2FpEiy43yhHOrjrlP2dP7o391l9nVRdXjQpkvE%2FKwdo9yDOQ%2Bensf8niQ2%2B3UhSbuc5c0Erlu48VenXG1KerMmkjls6wNz50owxrNRFiakCM4kV%2B0eRpxPC7KyK5H%2BanKxN5toQTSqSIh%2FYMDJJ8ffDgCldsv4lnLoA7DrkYfPlCM1uKWe5gKO406ds5kkoY906oJwCciUV9x55uREdv3%2B3v2sCn3f6eiuxzsK14CcDIi6qQ6%2BExPPJclTCMFgy1AyL8cjBhfK4Np5dhq7s0b0jM8CSbPAoj%2FeyhcvRYMOcLHaOKU7AWAStrJNfhyfSTjy7SljWXkBeMRzRut4EVz1vonAYdNOdXLuii%2BHH990TxaA2hMmbpD4PHdhZ5%2F3FbBDazwgiQY10gIT1ppyG8EOfTGYobSVV8BxjAgkinWG0RmY4sx%2BV5%2BQM25IVTx6tsxCZ7zpSvdTBCUhcnTI5Q9wLNuOzahLKtcCL0DGwByLdQZdDBa1U%2F49Ukg4VEh3Z68QFpTmR0%2B%2FhoU25JQtW03TloDihaEjr7zH%2BiQprrqW%2Bn%2BRD4G7MgNTEjNUoSFe1LS%2B%2FvyIg0Eh1jKXfUqEjv%2BkytSmxFIG8KRuaJiMjjTz11EjrOd0jvo1gu608BzbYXR3mCnGAta%2BC6CdQ3VuKdQdZ5iDHUxvAG2GFwvP6rT%2FW9lxF%2BzUsB2qfYcouglrbYszln%2FUlUJFUz3%2Bep0coKt6aX4EqWyxwtTk6%2BSYEPYIH7QMYlk3QOd%2FTHEPKYg4LMiZ4lPvt%2B2%2Bj7wO7Q7%2FG%2FRdsoDHU9LVFxbMRSU0f8Nl4bwWhx7cXAL8LWYo8CAWdEvSU3dzM%2FVZ3NRfo27qKdWQm%2By5EWD%2BKipTjXwSPh5cowaO4QUmitiBdgoI%2BloEk0xkpvk5Lhxn8f5kEhrGLxsVrJ9cJN5O9rUFEWQFhlHEVFBnPdxVGfIPXNqlyHa8EORulUA7gKgdkTfdKjerERUq44v%2B7ZNu2VVfFNGPcB7ObCPOnVl2RnCWUz5ryFiyIeU2Jguq2%2BXKdXqSlX6mig56NVLp6xANnFlbR6sjaaK%2Bt3alAtoM2FZblBHKnGNgOkhv%2B6aQuLhh6AiIcCGgBmXO6T9Y84RVHs1k%2ByK9wSb0TtLI71Ccb3ri0mecqC02SUKT8MlMY8Qd1%2BlCnXXL8n3eo5I4MdUIttW2z04Cv5SMRnxAXdOEvApaWRQCVvx4fy6GuXIsaEQ3fc%2BcJt1KrCUf%2B8%2Bn%2FT0LkWnEAwiAowaMjq5FNeiM8HUXUcy0R863jx5mv9Li53XnrQpjIlwqMU4kAVL6BFGrfhIg5GHviGy89SoZOSQZ%2Frgi%2FH%2FdmaLHh5Ti%2FXtAeLDPmGn0OffwIckd2SOYiYQF0foIZmzf0COw%2FWCca1NWlO9QUR5cdnZtt7EbKrKzi7EtIVxjcNsh2nQqcbCZi04tK8OGF89D%2FMBe4efOvMvNra7RuhSbQ%2FeJociRKwcsK%2FcqQL6Cx6Eqspp2Ui%2FXGyxnhDPLpdVJAP0HRkbux%2FS9igRk9PxZaxrnH2sukHbBEFW9ZsLoOXwKNeBM%2F2qMQvnKGX9VIUfHP4pYVSZN0Qz2gNqHPozVzuE5uSElM2TtS2UUOKEAca%2BayzD8syomki0K9C7%2BLYemabl3YSBMDTlE5NHT8FuxMNQQaZcRGorH0%2BwChNhlZkUizjNCV5ZgTCsmDuYPG1e8wU0KuYiKwB8%2F%2B2TbJzIeoEu1io19LMe%2FAu%2BMmJ5iIih2sypRGayT7EzlXYsiJAD%2BzHWCnxZpUpVqowFTyI0FYpA5BEYmPwPfBrk%2BT2uXThS2kGruWuMQo%2BCcRugUrAGQLXua1N9Xh3g0YOpXQAhU9Z2W%2FXV91uofeNoC0hTktCv%2Fw1GKHMKFEXewARHbqB1IM1dWL6qxl3XsMU%2F22FioZ698V0ILRoNmUuvpoz%2BLyDX7kUK6Pd%2BKMn14%2BAe%2FxdWB9RKwdIUXaiNoPHcu3auQ%2Bnrx6ZIrfNGUG9wYfYpHnbGEbclv86KNTzJ6tKX3d0sT9ggakoC4hVoC50ulYPM84fJiBq2CF2mN1G1YLkJ%2FaXrm4VT%2BcXU5LW%2F2JdocqH9GRExIg2Z7VNB0FoBpfl%2BiZQyhIO6j5ItwlcS4pV5KQq7aBA5gDlb%2Fmdf3UppzEYWSZLliegzAoX9m1pJTOjYZMEZalxBfSMclvotQ9pASXMdsMf6mi0aux4WVBNJgLRN8osVyXKev9SBV2dPXQjTH9S41ddmBkP8%2B1EtQvE5cNC9FTIBhrqkYmELAXjmPBBcGV6GsuVKtbNQraab%2FlBipoQeX5LTbcgPfKRKUcOIX%2FHoNs2tBaYyDldWM2jNL2QLszAyeqDuz7oKX%2B%2FF09PxcbxhAKaJ7RyRWhJhTRi4MN64VNRTjy5NesxvnlbRfpWgasHoIpX3%2FvAnvB%2BK3P6M9gS9CTYToSVFtrOPAtwXTRdC%2FP9Q5Z%2Fr7mzZ%2FQrktF8w8fzieRw1uxzOfd6Y0Fs3du2qKBaI9SkI92AtVacm5nP%2BAwiR%2FMhzJYDEaXOAp98SCOtiVn63ur2GFGPioqfJCjpXPIIDZnr7bY4vPP7rzPoiQ1%2Bn1A2W2%2FIcZgblazeS9IxaOGN1T4ei7ZdB6VN%2F%2BXmb9FcotWICkmafYE%2F%2Bv7nL2r9K0Mm4xY%2BVKLJX4XYA6iC2mT0m0%2Bszz1opx8sZGgmywj%2FA%2BBS05sGgNLtYDJl4VErjl13F22Y8YDPmd8vUfhsK8Qkl%2FZujW%2BrLptqYEYApAVvOpysyTDlraiN1R5nG29NKNGcxAH5ZuDrQU8nZMDSiPsKadyfhl9yH0i0Vrk%2FVMM%2Brxd%2BA7BOSDH57M%2B0PsyZt4%2F4orBKhRQHljAxOdSezIiAy8pdKGntPouQQCidGZmjOqWuTk9BLdPqEvfOG4T4h%2FSod6Y2M7wn9O0s2s3C8BeWQh9RODWCnT2lWTKSe1oN%2BG0FSsHG6S9GKfGRyH7V7wv81FB7IMZgWqLF%2BaBYAGgF%2B1OKlL3BfMuGhgWxPcc0xZA1w2Bqg%2FCUz8ikachRr4ZocDbeBusXxXmJZAWN3wAK3d58esUxkqtfq6m44FXs0kDZWNByAovjQPzxM7tDeBb8sOdq6NLURIG1m42jVNLRWxPVVGmsoXD1GIiwyU7%2FS%2Bau25jCY%2BFC7GWajkLLnxwYNBcQ61dNCmMx72v0vRN%2F%2Bj9cNxo6JWLr5K5Nz9klvBtfEt4pfq%2B4aK036dB6sRXusKUwzwejb7vxZ%2FywYuY4fOkkOsSmhyIulrO4f2cAg7VHbFasnKrpGbXz1X9kyq2InuT32pyzjlFLqMiOa7r0knzcz4OTwHwRXBvgBMpy9cp6UM80TqMROtxH74MZpZ82uBBfUed%2FpazPK8rC%2B0pDJTxaqDPraaroNrAdEpgZUIj%2BFaqJYBo1AZ6c6JWZvgYkSKUGZacfkXkwAhptPFuQilT%2B7up6HPsm3a6AYduGlzoekhbE%2FsxVb2jr7cuWE3T8K46Ubyq9ogLRnr3S3WWb2PtY703KHBvGzH%2BUG1955M0fFTziMzipvcbkjVJ%2F5z62BsqkwvP5KgR%2F4Frs%2BqSWmhU9qLPeIAzx9x0Zps%2FChpMjrq%2FLmoEwVVvHq11VGintQj8dolSi4Fis6PvwdDINwSC2%2FMm3kfSIEQC1179%2BzLngG7NX7U9iQFXZpL2mqIPUHBOTAqQcsnXuui2oQBAndkaXNPmTuL%2FRtondz989iZ3sePtWUtjK9IxgVRNGgh2olSzJ2iZZpuwXLbN50m5%2FZzfe%2ByQfAT0GiwhO%2BxL9HFgMn6eurVKFtQhdMgBYfEL7DDtyurWYwmnPut6s5fE5PDGVD%2FOeDuRXvIzp0fCI%2BrSRwFmWXraL4fExj%2FMUh3gCLL0bMuIwoSnLxKiFmM1u30Z8GxwIHDnNNdXFBkOkOLzo0jqqsndiczdo1lQqElkanCdCz0yzxQiomEFAN0MKmCRlCTvI5dAmBMdXgOPiQLxUf4BhUsHINv7ILa34U8vahNJ%2FcPE2xoXaOhU2pjm4TKWJ0x5tcc%2BSdcoEMBv2e5nYKnaOR3H7wrKn%2F9onRWwx4tB1m8KwNQfJsMKack5SQFW99XC6wt3sHmMUwcyRi47BTQEgATNJnOwmRPYimZWiGol7s3bIeAyJDpYoEwyHxpzeCiloMYdmgvk5As7QKG%2BvClT%2Bv8p%2FVf6Vm7rM9LooeARHULwvimC8gVajOaqSmysbBF5UsoYWW3zrFzqm1CdJckqUICUCIoXb2Mp94i5rjTgtBbjE3Y2ifyxNH7%2Fz%2FM6uMIsudSDfMW9tYUQWs%2B09DOoEqdLDPOCT9IKb2x3W1TVaudanIQFb6b596vomQ8hEJILQkrEMEY%2BSrc%2FU6uTEZ%2Bmo6faDUrbh5vny4E9RQ40FFQZA%2Fg6B%2FXmekHUUTDMScQzYxvefd5FT50Smm2HHiNaUhy%2B4VlEQ9jPu6BogVvqkRUXtp%2Bl0NqPS7eZlZBRZgUxdNu1hwC88x%2BysK1%2BDkgCgvCWM4vSWFe%2BHXFuoiuxeXy3BL8mSA2PHMXeMHQffHHeXWtDMOOpNnnBEaPSl%2Fdxn0HdnOeK1qp7bR3uHKwe1sIWWQayivKALwx5iVm3Lf27K29QwgC36yxmSBbwEH4K8TQ4EEUO%2FS8kUEWn8unu%2BItUALvITeTMFk7LktHYSFhGVKaISNO0%2BBDT0rhMjKt6yNXnmWbZ%2F6s3hO6aGtlcZR6JkjsyCOV3YNFOGgxROjlJPFnUj0y7%2F9Md0BIYhW0LWYvkgcT%2FFq%2FcMY7JQ%2Bq3LYwR%2BN1L2Ah24%2FltPoFMXQJFbrgBLFZpERmHI4%2FGfh2iFTSQyyn%2FIrLPXzoOauW1P61ku%2FEmqi2sH2hepiOHfZXjW3x9DO2mZqtmDymabJnN%2FjWLU7VCWK7qrJCdA%2FiAD1vrbkIORboZYaDVwPgdHOePxNAjq3JUFhyWFMYwGwE6rqMyw2Fzpuan65o3ai6qumauHRcCpfsufKHpv9mb0BcnwEIvxmdwaxBvusumnuapnFo60t01q0FCK3cRsr7hd
+&__VIEWSTATEGENERATOR=7B9E3A74
+&__EVENTVALIDATION=TYvrNB%2Bpy6ohPKd33%2BodwfH5YHjNA3%2BZsyMWgOAOLWTKOwscm5POGShbOd%2BKh8096HVlE4Ri0jKIoiXNo4QWEdYqa6n1a1zQbN4AK7Nt734vA1mKdtIXFhugFNWg7IAbL3OB0K6kaZPOV%2FqrPe4DfJUCTZM%3D
+&__ASYNCPOST=true&
+
+*/
 
 //抓取数据 Chongqingwww.cqcp.net
 // func Get_Chongqing() {
@@ -422,105 +847,3 @@ func Get_Xinjiang() {
 // 	}
 
 // }
-
-//每天重庆棋盘
-func NewlottoChongqing() {
-
-	fmt.Print("New Draws 120 is Chongqing......")
-	//时间格式
-	//formate := "2006-01-02T15:04:05+08:00"
-	//time.ParseInLocation("2006-01-02 15:04:05", "2017-07-07 09:00:00", time.Local)
-
-	var starttime time.Time
-	var endtime time.Time
-
-	var t int64 //期数编号
-	var strt string
-	var edt time.Time
-
-	now := time.Now()
-	ts := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
-
-	ls := time.Date(now.Year(), now.Month(), now.Day(), 1, 54, 0, 0, time.Local)
-
-	zs := time.Date(now.Year(), now.Month(), now.Day(), 9, 45, 0, 0, time.Local)
-
-	bs := time.Date(now.Year(), now.Month(), now.Day(), 9, 50, 0, 0, time.Local)
-	//晚上
-	ws := time.Date(now.Year(), now.Month(), now.Day(), 21, 55, 0, 0, time.Local)
-
-	strt = ts.Format("20060102000")
-	t, _ = strconv.ParseInt(strt, 10, 64)
-
-	durmi, _ := time.ParseDuration("+5m")
-	start_durmi, _ := time.ParseDuration("-330s")
-
-	end_durmi, _ := time.ParseDuration("-30s")
-	day_durmi, _ := time.ParseDuration("+24h")
-
-	for i := 1; i <= 120; i++ {
-	LABEL:
-		if ts.Unix() > ls.Unix() && ts.Unix() <= zs.Unix() {
-			edt = ts.Add(durmi)
-			ts = edt
-			goto LABEL
-		}
-
-		if ts.Unix() <= ws.Unix() && ts.Unix() >= bs.Unix() {
-			durmi, _ = time.ParseDuration("+10m")
-			start_durmi, _ = time.ParseDuration("-11m")
-			//end_durmi, _ = time.ParseDuration("-5m")
-		} else {
-			durmi, _ = time.ParseDuration("+5m")
-			start_durmi, _ = time.ParseDuration("-6m")
-		}
-
-		edt = ts.Add(durmi)
-		ts = edt
-
-		starttime = ts.Add(start_durmi)
-		endtime = ts.Add(end_durmi)
-		t++
-
-		if i == 1 {
-			starttime = starttime.Add(day_durmi)
-		}
-
-		//fmt.Println("重庆时时彩数据添加成功", t, edt, ws, starttime, endtime)
-
-		//添加到数据
-		drawtime, _ := time.ParseInLocation("2006-01-02 15:04:05", "0001-01-01T00:00:00+08:00", time.Local)
-
-		draws := &models.Draws{
-			Counterid:       320,
-			Drawno:          t,
-			Drawtime:        drawtime,
-			Drawstatus:      4,
-			Starttime:       starttime,
-			Endtime:         endtime,
-			Betclosedmmss:   "00:00",
-			Isclosemanually: false,
-			Voidreason:      0,
-			Resultballs:     "",
-		}
-
-		if has := models.CheckDraw(t, 320); has {
-			falg, _ := models.NewDraw(draws)
-			fmt.Println("---------------------------------------------------------------------------")
-			fmt.Println("重庆时时彩数据添加成功", t, edt, ws, starttime, endtime, falg)
-		}
-
-	}
-
-}
-
-/*
-ScriptManager1=UpdatePanel1%7ClnkBtnFirst
-&__EVENTTARGET=lnkBtnFirst
-&__EVENTARGUMENT=
-&__VIEWSTATE=WEbm%2B543tuXtFfJ3UZY3j1t2t65KnxycuAVUi5VecmFytQjobRYazzx14iuc9QZqAMJmS2QW6QJQ2wKgnsQQ0ypPhSI2mgLPFBryrZwnBubfQ1qsVtSWf9JoGVUSyOO2vHlLwXzZY5ODZn0xBTU0aeAeKzNyWKUs%2FKwCqT%2Bj67si1rFy7v%2B5YsXPjGYCjVkitrU87kM3RyvSTae9tByWfMi0noKxgvzGiEPR8402CdgOBPTns%2BZgTlykTja6BF6pSInH156pwYfYreYbJvqTTcCucv0LhfESzZ%2BuRbRMToTzqJ%2Bka6az4pxkfpgnPl34NhKT3IzlgzHQ1Tu0558PkRTWiVLzvfmw5EtUvbuiw9tRq5ZtVx%2FvW%2FcCUiket3vEdUx79pF161AAGpyvcPAw2DSvBQiqlj4BkWInhsjn3KEQvk71%2BkaEn%2BRwg84xIlXo3UKxiYPhaGCudkuXj79nSc6k2u5zPDGo%2BAZlt72fFS2sIFqMR%2FwghKrWh67gmPf2fn4AJH2R9QTzXWVfNgMoF1b6lFyND7FQPs3I6PPwDEilqpanaY2X9jUTBDpNDuWThSgicbaNQfRmw%2BRtbqZBWEn3GEoYGF82FOtbT9ZC1%2Bo2HB8ek2%2F7WQoohnQaPtr%2Bx%2ByJeqdaGLX%2BegTwWOaoQPRWukCfgjx0kio%2BOqHQU4rmT0Sgoq4APYJRK4peM9cWwAl92vN4hBdbYphWpS1kIV%2FnxzxA3w13%2FPoBk6gKxQx0ApO3fzNJ%2BvOqoQ89hDy%2BE0LV147BzOHBwWI8Rd2Rd%2BCVtUduBD1s6L3s%2FFD7pTdWCCdGyqVZTKOzRiwKutHzkDKuZZxNGkUQyisV0Ma8Hlp3jI4zC8RO6OzDO9ZPYLf4Kg3xh%2BHo3jC2GrT1Kl2B0F%2BR2vWwShBVuGctoGEyumI1NEPxE4x0sRrYvgNo7ie%2B2MyrAeVL41yaLhAzl25O7J2aSpU6Qxfp9H2pVQQu3CE%2F73nka0DYIw%2F2N8WHH8ZqQFrY7SuVSC9NTE980QaHCxWTebcvJOMfXvVOIlgSVq%2B19LRX9ldCY1pMrtcT2OYwGgny0riJMhTO%2FSHsVwVtORl8uzrzSLAURe%2BWXrK8SmXuw150I1%2FOFqftZm49ZHon6po1UGNFYIv%2FntHxTdvifleKmtBYRGnbfhZiNHhN%2BveyDUihJVo2FbuCjuVRx2sjIjRrd3uj8yupaUEV0%2BzxGZ6r1pfPhmjmBSBQ1lPCnnpOh8pVWhK55YGGOTfUBeS442xBHr%2BPBTGzK2CJotH6YwZC6Wzhg9wcBQLmeX0YbH1b3XNRg%2FGrJRf3Ood%2BJNt0fVmUM18Dyo0o7jtLHZ82HJJaUSbIMDhSfkMHq9IOsrEYSIbeTKHDUNoZdsa69KNguoIkA7axz2ietDUXmKOdM7Z6V70444BNKpB1prcvD1kXLMt3WiMVzTnhC1cJsf6nu%2FClzGFmkG9uJnETCjanCMe30B1nGlKc%2FG8XBhIC4W%2FDB%2BhTMAFXebEdw2RMpszkR3fG2oNZhDC8C8GBB5YPdgwcuDxhNN69ZQZkbAAfC8SHSCY7ZqHzEl9FWNL1z7MeMHYPbcGyO8VJs%2FisB82Qoi%2BXiYkCSf42z8F0RtgXZVvZr6Ka%2B3XzwZNgSReVz2Jtc72Kxbf2vleKq%2Bjt8iksyg7klDnpD5dUWpWl6166s1%2BQHa5fsGOrd4%2FCnEv78DD8bEPLuaT0uYXT3a34olaggJiOQ3FMWj4NL1nXJBM4Wnf6KfASd%2BvcvkRaaY8hpJ%2FxUtXpeXnvtFpg%2BRLJlBa5r9CcIgdf3vflArDd%2B70UWwAi2R%2FqlpYbSdvGkpZF%2BWrS8jCwkGr1%2BpswfXHdlu5wBR0VSZ0AkgzXj2JEgMmzrWNJ%2Fp00IBw%2FRZdL0glhYRwNVFq8Mj9oVNHlfOT7FG3zIz1TzcuJxUpoQgfHJXgRRnSDkoX5fHTw%2FwG6D3PZUndoQ%2ButSxmPET0txd6fNGHJXo06moYUnvJ0pLCOgFU355dmKHkR9H0bP6G1%2BMkoyfXFP7fnqLAJFeAWRTWLsS31dw6%2FpqtRRtllt4ma3Qjv1KThWTY%2FYuOhez98vaciEajwnccxVZk2L3odR4yynjCabmoTDk1Ib%2FCDmzHqWNAmDfrILhtBIWhEWqYZaBw9tqnWGnhJZ2gXIa9qRyo52btzxlfYBjvmfe7IX21in2xocHlw3cYQyDjHrgEmwZCaKRMCRm4F9vkdP7byPX4rmqXQoEj57dK3ENOX0G7MhribUd5RDC4MeHTNdMHN3RlpJ%2FKz8ERaG4Z1oXGfeDAo2p8353oa0Hz0cFTWh7%2BC9gXeAHCUrR2709FlAfoOVHZ66YpzLdBRhxwrs%2BZw2HWVO8rQqnNOHIJwmfps6Egq6d%2BaUyyDvPGkHOPNWiTBgpjJqZOT5dk1HcqD%2BWpFpmQW27HWIDNbo%2BRoThd3aOwiqBOK0OJ6DZYXZvbe9HcmxhtaNtt8yCsLgv%2BnPAO1zCchwg3MndR%2BbIKfMT5Zxjlfjfw9ix7CtNjThqL%2FiTZ8%2FliyHYJxHZftXtRkTeL57X%2BY39FtIOAtSwO%2FwXIOWUjOA6tdxtbiCwuWRZNv%2BsUSvaPcg9k5TTYeK1H%2F7gUsDU37CcSoVCNykXeUx7t9cCdfVR1fHcs%2BXxKRkzWBbTbdMxVP689W5ACWXPOXRdPGy6rFjBFI8EPPf4SuaK6yIfOgYWaRbh4AShjTLcEqWCRFs0YvBj3UHz6KVMEb%2Brc%2FPg%2F8btQPa47wDc1Dfmmevmpjgf%2FAeWjSZTfYnODsuLufx8UcUsVnExyEJv8hHwkXcrABwZDr%2F3suohKwUMUsQ9pfyyrmcu6EPcLawizmMIQAAYe%2Bu9s3Kj9NV8tImOeppSu0g%2FCTB644%2BctSZld9K7a6oGzC%2B%2FpEiy43yhHOrjrlP2dP7o391l9nVRdXjQpkvE%2FKwdo9yDOQ%2Bensf8niQ2%2B3UhSbuc5c0Erlu48VenXG1KerMmkjls6wNz50owxrNRFiakCM4kV%2B0eRpxPC7KyK5H%2BanKxN5toQTSqSIh%2FYMDJJ8ffDgCldsv4lnLoA7DrkYfPlCM1uKWe5gKO406ds5kkoY906oJwCciUV9x55uREdv3%2B3v2sCn3f6eiuxzsK14CcDIi6qQ6%2BExPPJclTCMFgy1AyL8cjBhfK4Np5dhq7s0b0jM8CSbPAoj%2FeyhcvRYMOcLHaOKU7AWAStrJNfhyfSTjy7SljWXkBeMRzRut4EVz1vonAYdNOdXLuii%2BHH990TxaA2hMmbpD4PHdhZ5%2F3FbBDazwgiQY10gIT1ppyG8EOfTGYobSVV8BxjAgkinWG0RmY4sx%2BV5%2BQM25IVTx6tsxCZ7zpSvdTBCUhcnTI5Q9wLNuOzahLKtcCL0DGwByLdQZdDBa1U%2F49Ukg4VEh3Z68QFpTmR0%2B%2FhoU25JQtW03TloDihaEjr7zH%2BiQprrqW%2Bn%2BRD4G7MgNTEjNUoSFe1LS%2B%2FvyIg0Eh1jKXfUqEjv%2BkytSmxFIG8KRuaJiMjjTz11EjrOd0jvo1gu608BzbYXR3mCnGAta%2BC6CdQ3VuKdQdZ5iDHUxvAG2GFwvP6rT%2FW9lxF%2BzUsB2qfYcouglrbYszln%2FUlUJFUz3%2Bep0coKt6aX4EqWyxwtTk6%2BSYEPYIH7QMYlk3QOd%2FTHEPKYg4LMiZ4lPvt%2B2%2Bj7wO7Q7%2FG%2FRdsoDHU9LVFxbMRSU0f8Nl4bwWhx7cXAL8LWYo8CAWdEvSU3dzM%2FVZ3NRfo27qKdWQm%2By5EWD%2BKipTjXwSPh5cowaO4QUmitiBdgoI%2BloEk0xkpvk5Lhxn8f5kEhrGLxsVrJ9cJN5O9rUFEWQFhlHEVFBnPdxVGfIPXNqlyHa8EORulUA7gKgdkTfdKjerERUq44v%2B7ZNu2VVfFNGPcB7ObCPOnVl2RnCWUz5ryFiyIeU2Jguq2%2BXKdXqSlX6mig56NVLp6xANnFlbR6sjaaK%2Bt3alAtoM2FZblBHKnGNgOkhv%2B6aQuLhh6AiIcCGgBmXO6T9Y84RVHs1k%2ByK9wSb0TtLI71Ccb3ri0mecqC02SUKT8MlMY8Qd1%2BlCnXXL8n3eo5I4MdUIttW2z04Cv5SMRnxAXdOEvApaWRQCVvx4fy6GuXIsaEQ3fc%2BcJt1KrCUf%2B8%2Bn%2FT0LkWnEAwiAowaMjq5FNeiM8HUXUcy0R863jx5mv9Li53XnrQpjIlwqMU4kAVL6BFGrfhIg5GHviGy89SoZOSQZ%2Frgi%2FH%2FdmaLHh5Ti%2FXtAeLDPmGn0OffwIckd2SOYiYQF0foIZmzf0COw%2FWCca1NWlO9QUR5cdnZtt7EbKrKzi7EtIVxjcNsh2nQqcbCZi04tK8OGF89D%2FMBe4efOvMvNra7RuhSbQ%2FeJociRKwcsK%2FcqQL6Cx6Eqspp2Ui%2FXGyxnhDPLpdVJAP0HRkbux%2FS9igRk9PxZaxrnH2sukHbBEFW9ZsLoOXwKNeBM%2F2qMQvnKGX9VIUfHP4pYVSZN0Qz2gNqHPozVzuE5uSElM2TtS2UUOKEAca%2BayzD8syomki0K9C7%2BLYemabl3YSBMDTlE5NHT8FuxMNQQaZcRGorH0%2BwChNhlZkUizjNCV5ZgTCsmDuYPG1e8wU0KuYiKwB8%2F%2B2TbJzIeoEu1io19LMe%2FAu%2BMmJ5iIih2sypRGayT7EzlXYsiJAD%2BzHWCnxZpUpVqowFTyI0FYpA5BEYmPwPfBrk%2BT2uXThS2kGruWuMQo%2BCcRugUrAGQLXua1N9Xh3g0YOpXQAhU9Z2W%2FXV91uofeNoC0hTktCv%2Fw1GKHMKFEXewARHbqB1IM1dWL6qxl3XsMU%2F22FioZ698V0ILRoNmUuvpoz%2BLyDX7kUK6Pd%2BKMn14%2BAe%2FxdWB9RKwdIUXaiNoPHcu3auQ%2Bnrx6ZIrfNGUG9wYfYpHnbGEbclv86KNTzJ6tKX3d0sT9ggakoC4hVoC50ulYPM84fJiBq2CF2mN1G1YLkJ%2FaXrm4VT%2BcXU5LW%2F2JdocqH9GRExIg2Z7VNB0FoBpfl%2BiZQyhIO6j5ItwlcS4pV5KQq7aBA5gDlb%2Fmdf3UppzEYWSZLliegzAoX9m1pJTOjYZMEZalxBfSMclvotQ9pASXMdsMf6mi0aux4WVBNJgLRN8osVyXKev9SBV2dPXQjTH9S41ddmBkP8%2B1EtQvE5cNC9FTIBhrqkYmELAXjmPBBcGV6GsuVKtbNQraab%2FlBipoQeX5LTbcgPfKRKUcOIX%2FHoNs2tBaYyDldWM2jNL2QLszAyeqDuz7oKX%2B%2FF09PxcbxhAKaJ7RyRWhJhTRi4MN64VNRTjy5NesxvnlbRfpWgasHoIpX3%2FvAnvB%2BK3P6M9gS9CTYToSVFtrOPAtwXTRdC%2FP9Q5Z%2Fr7mzZ%2FQrktF8w8fzieRw1uxzOfd6Y0Fs3du2qKBaI9SkI92AtVacm5nP%2BAwiR%2FMhzJYDEaXOAp98SCOtiVn63ur2GFGPioqfJCjpXPIIDZnr7bY4vPP7rzPoiQ1%2Bn1A2W2%2FIcZgblazeS9IxaOGN1T4ei7ZdB6VN%2F%2BXmb9FcotWICkmafYE%2F%2Bv7nL2r9K0Mm4xY%2BVKLJX4XYA6iC2mT0m0%2Bszz1opx8sZGgmywj%2FA%2BBS05sGgNLtYDJl4VErjl13F22Y8YDPmd8vUfhsK8Qkl%2FZujW%2BrLptqYEYApAVvOpysyTDlraiN1R5nG29NKNGcxAH5ZuDrQU8nZMDSiPsKadyfhl9yH0i0Vrk%2FVMM%2Brxd%2BA7BOSDH57M%2B0PsyZt4%2F4orBKhRQHljAxOdSezIiAy8pdKGntPouQQCidGZmjOqWuTk9BLdPqEvfOG4T4h%2FSod6Y2M7wn9O0s2s3C8BeWQh9RODWCnT2lWTKSe1oN%2BG0FSsHG6S9GKfGRyH7V7wv81FB7IMZgWqLF%2BaBYAGgF%2B1OKlL3BfMuGhgWxPcc0xZA1w2Bqg%2FCUz8ikachRr4ZocDbeBusXxXmJZAWN3wAK3d58esUxkqtfq6m44FXs0kDZWNByAovjQPzxM7tDeBb8sOdq6NLURIG1m42jVNLRWxPVVGmsoXD1GIiwyU7%2FS%2Bau25jCY%2BFC7GWajkLLnxwYNBcQ61dNCmMx72v0vRN%2F%2Bj9cNxo6JWLr5K5Nz9klvBtfEt4pfq%2B4aK036dB6sRXusKUwzwejb7vxZ%2FywYuY4fOkkOsSmhyIulrO4f2cAg7VHbFasnKrpGbXz1X9kyq2InuT32pyzjlFLqMiOa7r0knzcz4OTwHwRXBvgBMpy9cp6UM80TqMROtxH74MZpZ82uBBfUed%2FpazPK8rC%2B0pDJTxaqDPraaroNrAdEpgZUIj%2BFaqJYBo1AZ6c6JWZvgYkSKUGZacfkXkwAhptPFuQilT%2B7up6HPsm3a6AYduGlzoekhbE%2FsxVb2jr7cuWE3T8K46Ubyq9ogLRnr3S3WWb2PtY703KHBvGzH%2BUG1955M0fFTziMzipvcbkjVJ%2F5z62BsqkwvP5KgR%2F4Frs%2BqSWmhU9qLPeIAzx9x0Zps%2FChpMjrq%2FLmoEwVVvHq11VGintQj8dolSi4Fis6PvwdDINwSC2%2FMm3kfSIEQC1179%2BzLngG7NX7U9iQFXZpL2mqIPUHBOTAqQcsnXuui2oQBAndkaXNPmTuL%2FRtondz989iZ3sePtWUtjK9IxgVRNGgh2olSzJ2iZZpuwXLbN50m5%2FZzfe%2ByQfAT0GiwhO%2BxL9HFgMn6eurVKFtQhdMgBYfEL7DDtyurWYwmnPut6s5fE5PDGVD%2FOeDuRXvIzp0fCI%2BrSRwFmWXraL4fExj%2FMUh3gCLL0bMuIwoSnLxKiFmM1u30Z8GxwIHDnNNdXFBkOkOLzo0jqqsndiczdo1lQqElkanCdCz0yzxQiomEFAN0MKmCRlCTvI5dAmBMdXgOPiQLxUf4BhUsHINv7ILa34U8vahNJ%2FcPE2xoXaOhU2pjm4TKWJ0x5tcc%2BSdcoEMBv2e5nYKnaOR3H7wrKn%2F9onRWwx4tB1m8KwNQfJsMKack5SQFW99XC6wt3sHmMUwcyRi47BTQEgATNJnOwmRPYimZWiGol7s3bIeAyJDpYoEwyHxpzeCiloMYdmgvk5As7QKG%2BvClT%2Bv8p%2FVf6Vm7rM9LooeARHULwvimC8gVajOaqSmysbBF5UsoYWW3zrFzqm1CdJckqUICUCIoXb2Mp94i5rjTgtBbjE3Y2ifyxNH7%2Fz%2FM6uMIsudSDfMW9tYUQWs%2B09DOoEqdLDPOCT9IKb2x3W1TVaudanIQFb6b596vomQ8hEJILQkrEMEY%2BSrc%2FU6uTEZ%2Bmo6faDUrbh5vny4E9RQ40FFQZA%2Fg6B%2FXmekHUUTDMScQzYxvefd5FT50Smm2HHiNaUhy%2B4VlEQ9jPu6BogVvqkRUXtp%2Bl0NqPS7eZlZBRZgUxdNu1hwC88x%2BysK1%2BDkgCgvCWM4vSWFe%2BHXFuoiuxeXy3BL8mSA2PHMXeMHQffHHeXWtDMOOpNnnBEaPSl%2Fdxn0HdnOeK1qp7bR3uHKwe1sIWWQayivKALwx5iVm3Lf27K29QwgC36yxmSBbwEH4K8TQ4EEUO%2FS8kUEWn8unu%2BItUALvITeTMFk7LktHYSFhGVKaISNO0%2BBDT0rhMjKt6yNXnmWbZ%2F6s3hO6aGtlcZR6JkjsyCOV3YNFOGgxROjlJPFnUj0y7%2F9Md0BIYhW0LWYvkgcT%2FFq%2FcMY7JQ%2Bq3LYwR%2BN1L2Ah24%2FltPoFMXQJFbrgBLFZpERmHI4%2FGfh2iFTSQyyn%2FIrLPXzoOauW1P61ku%2FEmqi2sH2hepiOHfZXjW3x9DO2mZqtmDymabJnN%2FjWLU7VCWK7qrJCdA%2FiAD1vrbkIORboZYaDVwPgdHOePxNAjq3JUFhyWFMYwGwE6rqMyw2Fzpuan65o3ai6qumauHRcCpfsufKHpv9mb0BcnwEIvxmdwaxBvusumnuapnFo60t01q0FCK3cRsr7hd
-&__VIEWSTATEGENERATOR=7B9E3A74
-&__EVENTVALIDATION=TYvrNB%2Bpy6ohPKd33%2BodwfH5YHjNA3%2BZsyMWgOAOLWTKOwscm5POGShbOd%2BKh8096HVlE4Ri0jKIoiXNo4QWEdYqa6n1a1zQbN4AK7Nt734vA1mKdtIXFhugFNWg7IAbL3OB0K6kaZPOV%2FqrPe4DfJUCTZM%3D
-&__ASYNCPOST=true&
-
-*/

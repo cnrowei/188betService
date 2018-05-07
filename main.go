@@ -68,10 +68,8 @@ func timeCountDown(drawsno int64, drawstime time.Time) {
 	now := time.Now()
 	ws1 := time.Date(now.Year(), now.Month(), now.Day(), 22, 00, 0, 0, time.Local)
 	ws2 := time.Date(now.Year(), now.Month(), now.Day(), 24, 00, 0, 0, time.Local)
-
 	ls1 := time.Date(now.Year(), now.Month(), now.Day(), 0, 00, 0, 0, time.Local)
 	ls2 := time.Date(now.Year(), now.Month(), now.Day(), 2, 00, 0, 0, time.Local)
-
 	sw1 := time.Date(now.Year(), now.Month(), now.Day(), 10, 00, 0, 0, time.Local)
 	sw2 := time.Date(now.Year(), now.Month(), now.Day(), 22, 00, 0, 0, time.Local)
 
@@ -131,19 +129,17 @@ func timeCountDown(drawsno int64, drawstime time.Time) {
 					keys = "10 Second Get Data"
 				} else {
 
+					nw := time.Now()
 					//晚上
-					if (now.Unix() >= ws1.Unix() && now.Unix() <= ws2.Unix()) || (now.Unix() >= ls1.Unix() && now.Unix() <= ls2.Unix()) {
+					if (nw.Unix() >= ws1.Unix() && nw.Unix() <= ws2.Unix()) || (nw.Unix() >= ls1.Unix() && nw.Unix() <= ls2.Unix()) {
 						minute = 5
 						second = 0
-					}
-
-					//10点到2点5分钟一期
-					if now.Unix() >= sw1.Unix() && now.Unix() <= sw2.Unix() {
+					} else if now.Unix() >= sw1.Unix() && now.Unix() <= sw2.Unix() { //10点到2点5分钟一期
 						minute = 10
 						second = 0
-					}
+					} else {
 
-					if now.Unix() >= ls2.Unix() && now.Unix() <= sw1.Unix() {
+						//if now.Unix() >= ls2.Unix() && now.Unix() <= sw1.Unix() {
 						minute = 480
 						second = 0
 					}
@@ -152,7 +148,7 @@ func timeCountDown(drawsno int64, drawstime time.Time) {
 				}
 
 				ts = time.Date(0, 0, 0, 0, minute, second, 0, time.Local)
-				fmt.Println("重新开始，距离下一次开奖时间倒计时")
+				fmt.Println("重新开始，距离下一次开奖时间倒计时:", ts)
 			}
 			//query.Get_Chongqing()
 		}

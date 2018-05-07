@@ -102,7 +102,100 @@ func WagersChongqing() {
 
 		fmt.Println("ID %s UPDATE WIN %s", win, id)
 	}
+}
 
+//重庆判断输赢
+func WagersXinjiang() {
+	fmt.Println("新疆结算输赢!")
+	//未结算的列表
+	var lists []*models.Wagers
+	var win bool = false
+
+	lists, err := models.GetWagersStatus()
+	if err != nil {
+		log.Panicln("Get Wagers Status listd data error!")
+	}
+	//循环
+	for _, v := range lists {
+
+		var balls string
+
+		if dinfo, err := models.GetDraw(v.Drawno, v.Counterid); err == nil {
+			balls = dinfo.Resultballs
+		} else {
+			fmt.Println("Get Draws Data [Resultballs] error!")
+			balls = ""
+		}
+
+		if balls == "" {
+			fmt.Println("Get Draws Data [Resultballs] is null!!!!!")
+			continue
+		}
+
+		//比赛结果
+		sballs := Ball(balls)
+
+		bettypes := strings.Split(v.Bettype, "_")
+		blen := len(bettypes)
+		//判断是否是定位
+		if strings.Contains(v.Bettype, "Fixed") {
+
+			if strings.Contains(v.Bettype, "BS") { //判断是否是大小
+				//获取结果
+				win = BS(bettypes[2], v.Selection, sballs)
+				fmt.Println("BS", win)
+			} else if strings.Contains(v.Bettype, "OE") { //判断是否是单双
+				//获取结果
+				win = OE(bettypes[2], v.Selection, sballs)
+				fmt.Println("OE", win)
+			} else {
+
+				if blen == 2 {
+
+					uballs := SelectionBall(v.Selection)
+					//定位输赢结果
+					win = Fixed(bettypes[1], sballs, uballs)
+				}
+			}
+
+		} else if strings.Contains(v.Bettype, "Digit") { //三字属性
+			//组三结果
+			win = Digit(bettypes[1], v.Selection, sballs)
+		} else if strings.Contains(v.Bettype, "sum") {
+
+			//百十个 | 和值
+			selint, err := strconv.Atoi(v.Selection)
+			if err != nil {
+				selint = -1
+			}
+
+			win = SUM(selint, sballs)
+
+		} else {
+
+			//百十个 | 跨度
+			selint, err := strconv.Atoi(v.Selection)
+			if err != nil {
+				selint = -1
+			}
+			win = SPAN(selint, sballs)
+		}
+
+		var winstatus int
+		if win {
+			winstatus = 1
+		} else {
+			winstatus = 0
+		}
+
+		//更新输赢状态
+		id, err := models.UpWagers(v, winstatus)
+		if err != nil {
+			fmt.Println("Edit Wagers [status] Error!")
+		}
+
+		fmt.Println("ID %s UPDATE WIN %s", win, id)
+	}
 }
 
 //重庆判断输赢

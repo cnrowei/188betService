@@ -1,0 +1,21 @@
+{
+    "isSuccess": true,
+    "data": {
+        "2018-05-05 (星期六)": {
+            "lotto": {
+                "gameDate": "2018-05-07 00:00:00",
+                "totalCount": 14,
+                "totalStake": 1820,
+                "totalReturnAmount": 312
+            }
+        },
+        "2018-04-27 (星期五)": {
+            "lotto": {
+                "gameDate": "2018-05-07 00:00:00",
+                "totalCount": 28,
+                "totalStake": 7700,
+                "totalReturnAmount": -2520
+            }
+        }
+    }
+}
